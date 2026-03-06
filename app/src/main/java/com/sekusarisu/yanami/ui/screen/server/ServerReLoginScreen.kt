@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
@@ -70,141 +71,171 @@ class ServerReLoginScreen(private val serverId: Long, private val forceTwoFa: Bo
             }
         }
 
-        Scaffold(
-                topBar = {
-                    TopAppBar(
-                            title = { Text(stringResource(R.string.server_relogin_title)) },
-                            navigationIcon = {
-                                IconButton(onClick = { navigator.pop() }) {
-                                    Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                            contentDescription =
-                                                    stringResource(R.string.action_back)
-                                    )
-                                }
-                            }
-                    )
-                }
-        ) { innerPadding ->
-            val lockCredentials = state.requires2fa && state.username.isNotBlank() && state.password.isNotBlank()
-            Column(
-                    modifier =
-                            Modifier.fillMaxSize()
-                                    .padding(innerPadding)
-                                    .padding(horizontal = 16.dp)
-                                    .verticalScroll(rememberScrollState())
-            ) {
-                Spacer(modifier = Modifier.height(8.dp))
+        ServerReLoginContent(
+            state = state,
+            onEvent = viewModel::onEvent,
+            onBack = { navigator.pop() }
+        )
+    }
+}
 
-                Text(
-                        text =
-                                if (state.serverName.isBlank()) ""
-                                else stringResource(
-                                        R.string.server_relogin_target,
-                                        state.serverName
-                                ),
-                        style = MaterialTheme.typography.titleMedium
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ServerReLoginContent(
+    state: ServerReLoginContract.State,
+    onEvent: (ServerReLoginContract.Event) -> Unit,
+    onBack: () -> Unit
+) {
+    Scaffold(
+            topBar = {
+                TopAppBar(
+                        title = { Text(stringResource(R.string.server_relogin_title)) },
+                        navigationIcon = {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription =
+                                                stringResource(R.string.action_back)
+                                )
+                            }
+                        }
                 )
-                if (state.baseUrl.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                            text = state.baseUrl,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(modifier = Modifier.height(12.dp))
+            }
+    ) { innerPadding ->
+        val lockCredentials = state.requires2fa && state.username.isNotBlank() && state.password.isNotBlank()
+        Column(
+                modifier =
+                        Modifier.fillMaxSize()
+                                .padding(innerPadding)
+                                .padding(horizontal = 16.dp)
+                                .verticalScroll(rememberScrollState())
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                    text =
+                            if (state.serverName.isBlank()) ""
+                            else stringResource(
+                                    R.string.server_relogin_target,
+                                    state.serverName
+                            ),
+                    style = MaterialTheme.typography.titleMedium
+            )
+            if (state.baseUrl.isNotBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                        text = stringResource(R.string.server_relogin_desc),
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = state.baseUrl,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                    text = stringResource(R.string.server_relogin_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                    value = state.username,
+                    onValueChange = {
+                        onEvent(ServerReLoginContract.Event.UsernameChanged(it))
+                    },
+                    label = { Text(stringResource(R.string.add_server_username_label)) },
+                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    singleLine = true,
+                    readOnly = lockCredentials,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                    value = state.password,
+                    onValueChange = {
+                        onEvent(ServerReLoginContract.Event.PasswordChanged(it))
+                    },
+                    label = { Text(stringResource(R.string.add_server_password_label)) },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    singleLine = true,
+                    readOnly = lockCredentials,
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions =
+                            KeyboardOptions(
+                                    keyboardType = KeyboardType.Password,
+                                    imeAction =
+                                            if (state.requires2fa) ImeAction.Next
+                                            else ImeAction.Done
+                            )
+            )
+
+            if (state.requires2fa) {
                 Spacer(modifier = Modifier.height(16.dp))
-
                 OutlinedTextField(
-                        value = state.username,
+                        value = state.twoFaCode,
                         onValueChange = {
-                            viewModel.onEvent(ServerReLoginContract.Event.UsernameChanged(it))
+                            onEvent(ServerReLoginContract.Event.TwoFaCodeChanged(it))
                         },
-                        label = { Text(stringResource(R.string.add_server_username_label)) },
-                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                        label = { Text(stringResource(R.string.add_server_2fa_label)) },
+                        placeholder = { Text(stringResource(R.string.add_server_2fa_hint)) },
+                        leadingIcon = { Icon(Icons.Default.Key, contentDescription = null) },
                         singleLine = true,
-                        readOnly = lockCredentials,
                         modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                        value = state.password,
-                        onValueChange = {
-                            viewModel.onEvent(ServerReLoginContract.Event.PasswordChanged(it))
-                        },
-                        label = { Text(stringResource(R.string.add_server_password_label)) },
-                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                        singleLine = true,
-                        readOnly = lockCredentials,
-                        modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions =
                                 KeyboardOptions(
-                                        keyboardType = KeyboardType.Password,
-                                        imeAction =
-                                                if (state.requires2fa) ImeAction.Next
-                                                else ImeAction.Done
+                                        keyboardType = KeyboardType.Number,
+                                        imeAction = ImeAction.Done
                                 )
                 )
+            }
 
-                if (state.requires2fa) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedTextField(
-                            value = state.twoFaCode,
-                            onValueChange = {
-                                viewModel.onEvent(
-                                        ServerReLoginContract.Event.TwoFaCodeChanged(it)
-                                )
-                            },
-                            label = { Text(stringResource(R.string.add_server_2fa_label)) },
-                            placeholder = { Text(stringResource(R.string.add_server_2fa_hint)) },
-                            leadingIcon = { Icon(Icons.Default.Key, contentDescription = null) },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions =
-                                    KeyboardOptions(
-                                            keyboardType = KeyboardType.Number,
-                                            imeAction = ImeAction.Done
-                                    )
+            state.error?.let {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                    onClick = { onEvent(ServerReLoginContract.Event.Submit) },
+                    enabled = !state.isLoading && !state.isSubmitting,
+                    modifier = Modifier.fillMaxWidth()
+            ) {
+                if (state.isSubmitting) {
+                    CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
                     )
-                }
-
-                state.error?.let {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Button(
-                        onClick = { viewModel.onEvent(ServerReLoginContract.Event.Submit) },
-                        enabled = !state.isLoading && !state.isSubmitting,
-                        modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (state.isSubmitting) {
-                        CircularProgressIndicator(
-                                modifier = Modifier.height(20.dp),
-                                strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(stringResource(R.string.server_relogin_action))
-                    }
+                } else {
+                    Text(stringResource(R.string.server_relogin_action))
                 }
             }
         }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Composable
+fun ServerReLoginScreenPreview() {
+    MaterialTheme {
+        ServerReLoginContent(
+            state = ServerReLoginContract.State(
+                serverName = "My Server",
+                baseUrl = "https://example.com/api",
+                requires2fa = true,
+                username = "admin",
+                password = "password"
+            ),
+            onEvent = {},
+            onBack = {}
+        )
     }
 }

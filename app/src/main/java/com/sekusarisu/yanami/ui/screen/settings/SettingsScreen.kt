@@ -255,3 +255,25 @@ private fun getThemeColorName(color: ThemeColor): String {
         ThemeColor.GREEN -> stringResource(R.string.theme_green)
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Composable
+fun ThemeColorCirclePreview() {
+    MaterialTheme {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {
+            ThemeColorCircle(themeColor = ThemeColor.BLUE, isSelected = true, label = "Blue", onClick = {})
+            ThemeColorCircle(themeColor = ThemeColor.PINK, isSelected = false, label = "Pink", onClick = {})
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Composable
+fun DarkModeChipPreview() {
+    MaterialTheme {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {
+            DarkModeChip(label = "System", selected = true, onClick = {})
+            DarkModeChip(label = "Dark", selected = false, onClick = {})
+        }
+    }
+}

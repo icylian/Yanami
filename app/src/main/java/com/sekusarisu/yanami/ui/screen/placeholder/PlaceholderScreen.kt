@@ -57,3 +57,11 @@ class PlaceholderScreen : Screen {
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Composable
+fun PlaceholderScreenPreview() {
+    MaterialTheme {
+        PlaceholderScreen().Content()
+    }
+}

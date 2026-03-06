@@ -312,3 +312,30 @@ private fun ServerCard(
         )
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Composable
+fun ServerListScreenEmptyPreview() {
+    MaterialTheme {
+        EmptyState()
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Composable
+fun ServerCardPreview() {
+    val sampleServer = ServerInstance(
+        id = 1,
+        name = "My Server",
+        baseUrl = "https://example.com/api",
+        username = "admin",
+        password = "password",
+        isActive = true
+    )
+    MaterialTheme {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            ServerCard(server = sampleServer, onSelect = {}, onDelete = {}, onEdit = {})
+            ServerCard(server = sampleServer.copy(id = 2, name = "Offline Server", isActive = false), onSelect = {}, onDelete = {}, onEdit = {})
+        }
+    }
+}

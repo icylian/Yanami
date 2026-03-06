@@ -1141,3 +1141,74 @@ fun ServerInfoCardPreview() {
         ServerInfoCard(node = sampleNode)
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun LoadChartSectionPreview() {
+    val sampleRecords = listOf(
+        LoadRecord(time = "2026-03-01T10:00:00Z", cpu = 40.0, ramPercent = 50.0, diskPercent = 60.0, netIn = 1024, netOut = 2048, load = 1.0, process = 100, connections = 50, connectionsUdp = 10),
+        LoadRecord(time = "2026-03-01T10:05:00Z", cpu = 45.0, ramPercent = 52.0, diskPercent = 60.0, netIn = 2048, netOut = 4096, load = 1.2, process = 105, connections = 60, connectionsUdp = 12),
+        LoadRecord(time = "2026-03-01T10:10:00Z", cpu = 35.0, ramPercent = 48.0, diskPercent = 60.0, netIn = 512, netOut = 1024, load = 0.9, process = 95, connections = 45, connectionsUdp = 8)
+    )
+    MaterialTheme {
+        LoadChartSection(
+            records = sampleRecords,
+            isLoading = false,
+            selectedHours = 1,
+            onHoursChanged = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PingChartSectionPreview() {
+    val sampleTasks = listOf(
+        PingTask(id = 1, name = "Google", interval = 60, latest = 15.0, min = 10.0, max = 20.0, avg = 14.0, loss = 0.0, p50 = 14.0, p99 = 19.0)
+    )
+    val sampleRecords = listOf(
+        PingRecord(taskId = 1, taskName = "Google", time = "2026-03-01T10:00:00Z", value = 15.0),
+        PingRecord(taskId = 1, taskName = "Google", time = "2026-03-01T10:05:00Z", value = 16.0),
+        PingRecord(taskId = 1, taskName = "Google", time = "2026-03-01T10:10:00Z", value = 14.0)
+    )
+    MaterialTheme {
+        PingChartSection(
+            tasks = sampleTasks,
+            records = sampleRecords,
+            isLoading = false,
+            selectedHours = 1,
+            onHoursChanged = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ChartComponentsPreview() {
+    val times = listOf("2026-03-01T10:00:00Z", "2026-03-01T10:05:00Z", "2026-03-01T10:10:00Z")
+    MaterialTheme {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            UsageBar(label = "CPU", percent = 45.0, detail = "45.0%")
+            ChartCard(
+                title = "CPU Usage",
+                data = listOf(40.0, 45.0, 35.0),
+                times = times,
+                color = MaterialTheme.colorScheme.primary,
+                suffix = "%"
+            )
+            ConnectionChartCard(
+                title = "Connections",
+                tcpData = listOf(50, 60, 45),
+                udpData = listOf(10, 12, 8),
+                times = times,
+                suffix = ""
+            )
+            NetworkChartCard(
+                title = "Network",
+                netInData = listOf(1024.0, 2048.0, 512.0),
+                netOutData = listOf(2048.0, 4096.0, 1024.0),
+                times = times
+            )
+        }
+    }
+}

@@ -585,3 +585,56 @@ private fun EmptyNodeList(hasSearchQuery: Boolean, hasGroupFilter: Boolean) {
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Composable
+fun SearchBarPreview() {
+    MaterialTheme {
+        SearchBar(query = "Tokyo", onQueryChange = {})
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Composable
+fun OverviewCardPreview() {
+    MaterialTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            OverviewCard(
+                onlineCount = 8,
+                offlineCount = 2,
+                totalCount = 10,
+                totalNetIn = 1024L * 1024 * 5,
+                totalNetOut = 1024L * 1024 * 10,
+                totalTrafficUp = 1024L * 1024 * 1024 * 100,
+                totalTrafficDown = 1024L * 1024 * 1024 * 500
+            )
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Composable
+fun GroupFilterRowPreview() {
+    MaterialTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            GroupFilterRow(
+                groups = listOf("Asia", "Europe", "America"),
+                selectedGroup = "Asia",
+                onGroupSelected = {}
+            )
+        }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
+@Composable
+fun StateContentPreview() {
+    MaterialTheme {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            LoadingContent()
+            ErrorContent(error = "Network Error", onRetry = {})
+            EmptyNodeList(hasSearchQuery = true, hasGroupFilter = false)
+        }
+    }
+}
+
