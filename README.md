@@ -11,19 +11,31 @@
 - **多实例管理** — 添加、编辑、切换多个 Komari 服务端实例
 - **实时节点列表** — WebSocket 实时推送节点状态（CPU / RAM / 磁盘 / 网络 IO）
 - **节点详情看板** — 负载历史折线图、Ping 延迟趋势、服务器基础信息
-- **SSH 终端** — 基于 WebSocket 的全功能 ANSI/VT100 终端，支持特殊按键工具栏与字号调整
+- **SSH 终端** — 基于 Terminal-view + WebSocket 的全功能 ANSI/VT100 终端，支持特殊按键工具栏与字号调整
 - **多语言** — 中文（默认）、English、日本語
 - **主题系统** — Material You 动态取色（Android 12+）+ 6 种预设配色，支持深色/浅色/跟随系统
 
 ## 截图
 
+### 实例管理
+
 <p style="text-align: center;">
     <img alt="desktop" src="assets/addserver.png" width="360"> <img alt="desktop" src="assets/serverlist.png" width="360">
 </p>
 
+### 日间/浅色模式
+
 <p style="text-align: center;">
     <img alt="desktop" src="assets/nodelist.png" width="360"> <img alt="desktop" src="assets/nodedetail1.png" width="360">
 </p>
+
+### 夜间/深色模式
+
+<p style="text-align: center;">
+    <img alt="desktop" src="assets/nodelistdark.png" width="360"> <img alt="desktop" src="assets/nodedetaildark.png" width="360">
+</p>
+
+### 延迟监测/SSH终端
 
 <p style="text-align: center;">
     <img alt="desktop" src="assets/nodedetail2.png" width="360"> <img alt="desktop" src="assets/nodeterminal.png" width="360">
