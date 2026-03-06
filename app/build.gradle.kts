@@ -33,6 +33,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures { compose = true }
+    packaging {
+        jniLibs {
+            // 让 native 库在安装时解压到磁盘，由 OS 完成对齐，
+            // 绕开 APK 内 16KB 页对齐要求（termux/DataStore/AndroidX 旧版 .so 未对齐）
+            useLegacyPackaging = true
+        }
+    }
 }
 
 dependencies {

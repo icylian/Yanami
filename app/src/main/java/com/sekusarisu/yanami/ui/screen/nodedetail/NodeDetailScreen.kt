@@ -46,9 +46,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
@@ -58,7 +61,12 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
+import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
+import com.patrykandpatrick.vico.compose.common.fill
+import com.patrykandpatrick.vico.compose.common.shader.verticalGradient
+import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
+import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
@@ -511,7 +519,7 @@ private fun LoadChartSection(
                         title = stringResource(R.string.node_detail_ram),
                         data = records.map { it.ramPercent },
                         times = times,
-                        color = MaterialTheme.colorScheme.secondary,
+                        color = MaterialTheme.colorScheme.primary,
                         suffix = "%"
                 )
 
@@ -543,7 +551,7 @@ private fun LoadChartSection(
                         title = stringResource(R.string.node_detail_process),
                         data = records.map { it.process.toDouble() },
                         times = times,
-                        color = Color(0xFF009688),
+                        color = MaterialTheme.colorScheme.primary,
                         suffix = ""
                 )
             }
@@ -580,6 +588,7 @@ private fun ChartCard(
         color: Color,
         suffix: String
 ) {
+    val themedLine = rememberThemedLine(color)
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -621,7 +630,9 @@ private fun ChartCard(
             CartesianChartHost(
                     chart =
                             rememberCartesianChart(
-                                    rememberLineCartesianLayer(),
+                                    rememberLineCartesianLayer(
+                                            LineCartesianLayer.LineProvider.series(themedLine)
+                                    ),
                                     startAxis =
                                             VerticalAxis.rememberStart(
                                                     valueFormatter = yAxisFormatter
@@ -660,6 +671,8 @@ private fun ConnectionChartCard(
     times: List<String>,
     suffix: String
 ) {
+    val tcpLine = rememberThemedLine(MaterialTheme.colorScheme.primary)
+    val udpLine = rememberThemedLine(MaterialTheme.colorScheme.tertiary)
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -672,9 +685,18 @@ private fun ConnectionChartCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "TCP " + tcpData.last().toString() + suffix + " / " + "UDP " + udpData.last().toString() + suffix,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                        append("TCP " + tcpData.last().toString() + suffix)
+                    }
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                        append(" / ")
+                    }
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.tertiary)) {
+                        append("UDP " + udpData.last().toString() + suffix)
+                    }
+                },
+                style = MaterialTheme.typography.labelMedium
             )
         }
         Spacer(modifier = Modifier.height(4.dp))
@@ -708,7 +730,7 @@ private fun ConnectionChartCard(
             CartesianChartHost(
                 chart =
                     rememberCartesianChart(
-                        rememberLineCartesianLayer(),
+                        rememberLineCartesianLayer(LineCartesianLayer.LineProvider.series(tcpLine, udpLine)),
                         startAxis =
                             VerticalAxis.rememberStart(
                                 valueFormatter = yAxisFormatter
@@ -750,6 +772,8 @@ private fun NetworkChartCard(
         netOutData: List<Double>,
         times: List<String>
 ) {
+    val upLine = rememberThemedLine(MaterialTheme.colorScheme.primary)
+    val downLine = rememberThemedLine(MaterialTheme.colorScheme.tertiary)
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -762,9 +786,18 @@ private fun NetworkChartCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "↓ " + formatChartSpeed(netInData.last()) + " / " + "↑ " + formatChartSpeed(netOutData.last()),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.tertiary)) {
+                        append("↓ " + formatChartSpeed(netInData.last()))
+                    }
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+                        append(" / ")
+                    }
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                        append("↑ " + formatChartSpeed(netOutData.last()))
+                    }
+                },
+                style = MaterialTheme.typography.labelMedium
             )
         }
         Spacer(modifier = Modifier.height(4.dp))
@@ -797,7 +830,7 @@ private fun NetworkChartCard(
             CartesianChartHost(
                     chart =
                             rememberCartesianChart(
-                                    rememberLineCartesianLayer(),
+                                    rememberLineCartesianLayer(LineCartesianLayer.LineProvider.series(upLine, downLine)),
                                     startAxis =
                                             VerticalAxis.rememberStart(
                                                     valueFormatter = yAxisFormatter
@@ -933,10 +966,11 @@ private fun PingChartSection(
                                     }
                                 }
 
+                        val pingLine = rememberThemedLine(MaterialTheme.colorScheme.tertiary)
                         CartesianChartHost(
                                 chart =
                                         rememberCartesianChart(
-                                                rememberLineCartesianLayer(),
+                                                rememberLineCartesianLayer(LineCartesianLayer.LineProvider.series(pingLine)),
                                                 startAxis =
                                                         VerticalAxis.rememberStart(
                                                                 valueFormatter = yAxisFormatter
@@ -1040,7 +1074,24 @@ private fun ErrorContent(error: String, onRetry: () -> Unit, modifier: Modifier 
     }
 }
 
-// ─── 工具函数 ───
+// ─── 图表线段样式 ───
+
+/**
+ * 创建跟随 MD3 主题色的折线样式：实色线段 + 线下渐变阴影。
+ * 渐变由 [color]（32% 透明度）渐变至透明，符合 Material 3 图表规范。
+ */
+@Composable
+private fun rememberThemedLine(color: Color): LineCartesianLayer.Line =
+        LineCartesianLayer.rememberLine(
+                fill = LineCartesianLayer.LineFill.single(fill(color)),
+                areaFill = LineCartesianLayer.AreaFill.single(
+                        fill(ShaderProvider.verticalGradient(
+                                arrayOf(color.copy(alpha = 0.32f), Color.Transparent)
+                        ))
+                )
+        )
+
+// ─── 图表工具函数 ───
 
 private fun getUsageColor(percent: Double): Color {
     return when {
