@@ -51,6 +51,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.sekusarisu.yanami.R
 import com.sekusarisu.yanami.ui.screen.nodelist.NodeListScreen
+import com.sekusarisu.yanami.ui.screen.soundClick
 import org.koin.core.parameter.parametersOf
 
 /** 添加服务器实例页面 */
@@ -126,7 +127,7 @@ fun AddServerContent(
                             )
                         },
                         navigationIcon = {
-                            IconButton(onClick = onBack) {
+                            IconButton(onClick = soundClick { onBack() }) {
                                 Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                         contentDescription =
@@ -257,7 +258,7 @@ fun AddServerContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             FilledTonalButton(
-                    onClick = { onEvent(ServerContract.Event.TestConnection) },
+                    onClick = soundClick { onEvent(ServerContract.Event.TestConnection) },
                     enabled =
                             !state.isTesting &&
                                     state.baseUrl.isNotBlank() &&
@@ -318,7 +319,7 @@ fun AddServerContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                    onClick = { onEvent(ServerContract.Event.SaveServer) },
+                    onClick = soundClick { onEvent(ServerContract.Event.SaveServer) },
                     enabled =
                             !state.isSaving &&
                                     state.name.isNotBlank() &&

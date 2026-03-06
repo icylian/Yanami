@@ -67,6 +67,7 @@ import com.sekusarisu.yanami.R
 import com.sekusarisu.yanami.ui.screen.nodedetail.NodeDetailScreen
 import com.sekusarisu.yanami.ui.screen.server.ServerListScreen
 import com.sekusarisu.yanami.ui.screen.server.ServerReLoginScreen
+import com.sekusarisu.yanami.ui.screen.soundClick
 
 /**
  * 节点列表主页面
@@ -123,7 +124,7 @@ class NodeListScreen : Screen {
                                 )
                             },
                             navigationIcon = {
-                                IconButton(onClick = { navigator.pop() }) {
+                                IconButton(onClick = soundClick { navigator.pop() }) {
                                     Icon(
                                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                             contentDescription =
@@ -133,7 +134,7 @@ class NodeListScreen : Screen {
                             },
                             actions = {
                                 // 全局展开/收缩按钮
-                                IconButton(onClick = { isAllExpanded = !isAllExpanded }) {
+                                IconButton(onClick = soundClick { isAllExpanded = !isAllExpanded }) {
                                     Icon(
                                             imageVector =
                                                     if (isAllExpanded) Icons.Default.UnfoldLess
@@ -282,7 +283,7 @@ private fun NodeListContent(
             items(state.filteredNodes, key = { it.uuid }) { node ->
                 NodeCard(
                         node = node,
-                        onClick = {
+                        onClick = soundClick {
                             viewModel.onEvent(NodeListContract.Event.NodeClicked(node.uuid))
                         },
                         isExpanded = isAllExpanded
@@ -494,13 +495,13 @@ private fun GroupFilterRow(
     ) {
         FilterChip(
                 selected = selectedGroup == null,
-                onClick = { onGroupSelected(null) },
+                onClick = soundClick { onGroupSelected(null) },
                 label = { Text(stringResource(R.string.node_filter_all)) }
         )
         groups.forEach { group ->
             FilterChip(
                     selected = selectedGroup == group,
-                    onClick = { onGroupSelected(if (selectedGroup == group) null else group) },
+                    onClick = soundClick { onGroupSelected(if (selectedGroup == group) null else group) },
                     label = { Text(group) }
             )
         }
@@ -544,7 +545,7 @@ private fun ErrorContent(error: String, onRetry: () -> Unit, modifier: Modifier 
                     color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
-            OutlinedButton(onClick = onRetry) {
+            OutlinedButton(onClick = soundClick { onRetry() }) {
                 Icon(Icons.Default.Refresh, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.action_retry))

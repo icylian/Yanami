@@ -58,6 +58,7 @@ import com.sekusarisu.yanami.R
 import com.sekusarisu.yanami.domain.model.ServerInstance
 import com.sekusarisu.yanami.ui.screen.nodelist.NodeListScreen
 import com.sekusarisu.yanami.ui.screen.settings.SettingsScreen
+import com.sekusarisu.yanami.ui.screen.soundClick
 
 /**
  * 服务端实例列表页面
@@ -101,7 +102,7 @@ class ServerListScreen : Screen {
                             title = { Text(stringResource(R.string.server_management)) },
                             scrollBehavior = scrollBehavior,
                             actions = {
-                                IconButton(onClick = { navigator.push(SettingsScreen()) }) {
+                                IconButton(onClick = soundClick { navigator.push(SettingsScreen()) }) {
                                     Icon(
                                             Icons.Default.Settings,
                                             contentDescription =
@@ -112,7 +113,7 @@ class ServerListScreen : Screen {
                     )
                 },
                 floatingActionButton = {
-                    FloatingActionButton(onClick = { navigator.push(AddServerScreen()) }) {
+                    FloatingActionButton(onClick = soundClick { navigator.push(AddServerScreen()) }) {
                         Icon(
                                 Icons.Default.Add,
                                 contentDescription = stringResource(R.string.server_add_fab_desc)
@@ -207,7 +208,7 @@ private fun ServerCard(
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     Card(
-            onClick = onSelect,
+            onClick = soundClick { onSelect() },
             modifier = Modifier.fillMaxWidth(),
             colors =
                     if (server.isActive) {
@@ -269,14 +270,14 @@ private fun ServerCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
             }
-            IconButton(onClick = onEdit) {
+            IconButton(onClick = soundClick { onEdit() }) {
                 Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = stringResource(R.string.action_edit),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            IconButton(onClick = { showDeleteDialog = true }) {
+            IconButton(onClick = soundClick { showDeleteDialog = true }) {
                 Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = stringResource(R.string.action_delete),
@@ -293,7 +294,7 @@ private fun ServerCard(
                 text = { Text(stringResource(R.string.server_delete_confirm, server.name)) },
                 confirmButton = {
                     TextButton(
-                            onClick = {
+                            onClick = soundClick {
                                 showDeleteDialog = false
                                 onDelete()
                             }
@@ -305,7 +306,7 @@ private fun ServerCard(
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDeleteDialog = false }) {
+                    TextButton(onClick = soundClick { showDeleteDialog = false }) {
                         Text(stringResource(R.string.action_cancel))
                     }
                 }

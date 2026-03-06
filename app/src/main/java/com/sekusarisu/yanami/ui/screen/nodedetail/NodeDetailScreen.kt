@@ -77,6 +77,7 @@ import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import com.sekusarisu.yanami.R
+import com.sekusarisu.yanami.ui.screen.soundClick
 import com.sekusarisu.yanami.domain.model.LoadRecord
 import com.sekusarisu.yanami.domain.model.Node
 import com.sekusarisu.yanami.domain.model.PingRecord
@@ -136,7 +137,7 @@ class NodeDetailScreen(private val uuid: String) : Screen {
                                 )
                             },
                             navigationIcon = {
-                                IconButton(onClick = { navigator.pop() }) {
+                                IconButton(onClick = soundClick { navigator.pop() }) {
                                     Icon(
                                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                             contentDescription =
@@ -148,7 +149,7 @@ class NodeDetailScreen(private val uuid: String) : Screen {
                                 // SSH 终端入口：仅节点在线时可用
                                 val isOnline = state.node?.isOnline ?: false
                                 IconButton(
-                                        onClick = {
+                                        onClick = soundClick {
                                             navigator.push(
                                                     SshTerminalScreen(
                                                             uuid = uuid,
@@ -1009,7 +1010,7 @@ private fun TimeRangeSelector(
         if (showRealtime) {
             FilterChip(
                     selected = selectedHours == 0,
-                    onClick = { onHoursChanged(0) },
+                    onClick = soundClick { onHoursChanged(0) },
                     label = {
                         Text(
                                 text = stringResource(R.string.node_detail_realtime),
@@ -1021,7 +1022,7 @@ private fun TimeRangeSelector(
         listOf(1, 6, 24).forEach { hours ->
             FilterChip(
                     selected = selectedHours == hours,
-                    onClick = { onHoursChanged(hours) },
+                    onClick = soundClick { onHoursChanged(hours) },
                     label = {
                         Text(text = "${hours}h", style = MaterialTheme.typography.labelSmall)
                     }
@@ -1065,7 +1066,7 @@ private fun ErrorContent(error: String, onRetry: () -> Unit, modifier: Modifier 
                     color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
-            OutlinedButton(onClick = onRetry) {
+            OutlinedButton(onClick = soundClick { onRetry() }) {
                 Icon(Icons.Default.Refresh, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.action_retry))

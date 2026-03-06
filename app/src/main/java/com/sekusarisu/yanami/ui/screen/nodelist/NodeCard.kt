@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import com.sekusarisu.yanami.R
 import com.sekusarisu.yanami.domain.model.Node
+import com.sekusarisu.yanami.ui.screen.soundClick
 
 /**
  * 节点卡片组件
@@ -54,7 +55,7 @@ import com.sekusarisu.yanami.domain.model.Node
 @Composable
 fun NodeCard(node: Node, onClick: () -> Unit, isExpanded: Boolean, modifier: Modifier = Modifier) {
         Card(
-                onClick = onClick,
+                onClick = soundClick { onClick() },
                 modifier = modifier.fillMaxWidth(),
                 colors =
                         CardDefaults.cardColors(

@@ -48,6 +48,7 @@ import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.sekusarisu.yanami.R
+import com.sekusarisu.yanami.ui.screen.soundClick
 import com.sekusarisu.yanami.ui.theme.ThemeColor
 
 /** 设置页面 */
@@ -65,7 +66,7 @@ class SettingsScreen : Screen {
                     TopAppBar(
                             title = { Text(stringResource(R.string.settings_title)) },
                             navigationIcon = {
-                                IconButton(onClick = { navigator.pop() }) {
+                                IconButton(onClick = soundClick { navigator.pop() }) {
                                     Icon(
                                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                             contentDescription =
@@ -107,7 +108,7 @@ class SettingsScreen : Screen {
                                 themeColor = color,
                                 isSelected = state.themeColor == color,
                                 label = getThemeColorName(color),
-                                onClick = { viewModel.onEvent(SettingsEvent.SetThemeColor(color)) }
+                                onClick = soundClick { viewModel.onEvent(SettingsEvent.SetThemeColor(color)) }
                         )
                     }
                 }
@@ -130,17 +131,17 @@ class SettingsScreen : Screen {
                     DarkModeChip(
                             label = stringResource(R.string.settings_dark_mode_system),
                             selected = state.darkMode == "system",
-                            onClick = { viewModel.onEvent(SettingsEvent.SetDarkMode("system")) }
+                            onClick = soundClick { viewModel.onEvent(SettingsEvent.SetDarkMode("system")) }
                     )
                     DarkModeChip(
                             label = stringResource(R.string.settings_dark_mode_light),
                             selected = state.darkMode == "light",
-                            onClick = { viewModel.onEvent(SettingsEvent.SetDarkMode("light")) }
+                            onClick = soundClick { viewModel.onEvent(SettingsEvent.SetDarkMode("light")) }
                     )
                     DarkModeChip(
                             label = stringResource(R.string.settings_dark_mode_dark),
                             selected = state.darkMode == "dark",
-                            onClick = { viewModel.onEvent(SettingsEvent.SetDarkMode("dark")) }
+                            onClick = soundClick { viewModel.onEvent(SettingsEvent.SetDarkMode("dark")) }
                     )
                 }
 
@@ -170,7 +171,7 @@ class SettingsScreen : Screen {
                     languages.forEach { (key, label) ->
                         FilterChip(
                                 selected = state.language == key,
-                                onClick = { viewModel.onEvent(SettingsEvent.SetLanguage(key)) },
+                                onClick = soundClick { viewModel.onEvent(SettingsEvent.SetLanguage(key)) },
                                 label = {
                                     Text(label, style = MaterialTheme.typography.labelMedium)
                                 }
@@ -217,7 +218,7 @@ private fun ThemeColorCircle(
                                                 )
                                         else Modifier
                                 )
-                                .clickable { onClick() },
+                                .clickable(onClick = soundClick { onClick() }),
                 contentAlignment = Alignment.Center
         ) {
             if (isSelected) {

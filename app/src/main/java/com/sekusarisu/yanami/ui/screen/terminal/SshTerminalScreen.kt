@@ -50,6 +50,7 @@ import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.sekusarisu.yanami.R
+import com.sekusarisu.yanami.ui.screen.soundClick
 import com.termux.terminal.TerminalSession
 import com.termux.view.TerminalView
 import com.termux.view.TerminalViewClient
@@ -109,7 +110,7 @@ class SshTerminalScreen(private val uuid: String, private val nodeName: String) 
                                 }
                             },
                             navigationIcon = {
-                                IconButton(onClick = { navigator.pop() }) {
+                                IconButton(onClick = soundClick { navigator.pop() }) {
                                     Icon(
                                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                             contentDescription = stringResource(R.string.action_back)
@@ -178,7 +179,7 @@ class SshTerminalScreen(private val uuid: String, private val nodeName: String) 
                                         style = MaterialTheme.typography.bodySmall
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
-                                TextButton(onClick = { navigator.pop() }) {
+                                TextButton(onClick = soundClick { navigator.pop() }) {
                                     Text("返回", color = Color.White)
                                 }
                             }
@@ -404,7 +405,7 @@ private fun SpecialKeysToolbar(
     @Composable
     fun KeyBtn(key: ToolbarKey, modifier: Modifier) {
         TextButton(
-                onClick = { onKey(key.bytes) },
+                onClick = soundClick { onKey(key.bytes) },
                 modifier = modifier.height(BTN_HEIGHT),
                 contentPadding = BTN_PADDING
         ) {
@@ -420,7 +421,7 @@ private fun SpecialKeysToolbar(
     @Composable
     fun ToggleBtn(label: String, active: Boolean, onClick: () -> Unit, modifier: Modifier) {
         TextButton(
-                onClick = onClick,
+                onClick = soundClick { onClick() },
                 modifier = modifier.height(BTN_HEIGHT),
                 contentPadding = BTN_PADDING
         ) {
@@ -436,7 +437,7 @@ private fun SpecialKeysToolbar(
     @Composable
     fun KbdBtn(modifier: Modifier) {
         IconButton(
-                onClick = {
+                onClick = soundClick {
                     val imm = context.getSystemService(InputMethodManager::class.java)
                     @Suppress("DEPRECATION")
                     imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0)

@@ -43,6 +43,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.sekusarisu.yanami.R
 import com.sekusarisu.yanami.ui.screen.nodelist.NodeListScreen
+import com.sekusarisu.yanami.ui.screen.soundClick
 import org.koin.core.parameter.parametersOf
 
 /** 会话失效后的重登录页面 */
@@ -91,7 +92,7 @@ fun ServerReLoginContent(
                 TopAppBar(
                         title = { Text(stringResource(R.string.server_relogin_title)) },
                         navigationIcon = {
-                            IconButton(onClick = onBack) {
+                            IconButton(onClick = soundClick { onBack() }) {
                                 Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                         contentDescription =
@@ -205,7 +206,7 @@ fun ServerReLoginContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                    onClick = { onEvent(ServerReLoginContract.Event.Submit) },
+                    onClick = soundClick { onEvent(ServerReLoginContract.Event.Submit) },
                     enabled = !state.isLoading && !state.isSubmitting,
                     modifier = Modifier.fillMaxWidth()
             ) {
