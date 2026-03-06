@@ -17,7 +17,17 @@
 
 ## 截图
 
-<!-- TODO: 添加截图 -->
+<p style="text-align: center;">
+    <img alt="desktop" src="assets/addserver.png" width="360"> <img alt="desktop" src="assets/serverlist.png" width="360">
+</p>
+
+<p style="text-align: center;">
+    <img alt="desktop" src="assets/nodelist.png" width="360"> <img alt="desktop" src="assets/nodedetail1.png" width="360">
+</p>
+
+<p style="text-align: center;">
+    <img alt="desktop" src="assets/nodedetail2.png" width="360"> <img alt="desktop" src="assets/nodeterminal.png" width="360">
+</p>
 
 ## 系统要求
 
