@@ -84,6 +84,7 @@ import com.sekusarisu.yanami.domain.model.PingRecord
 import com.sekusarisu.yanami.domain.model.PingTask
 import com.sekusarisu.yanami.ui.screen.nodelist.formatBytes
 import com.sekusarisu.yanami.ui.screen.nodelist.formatUptime
+import com.sekusarisu.yanami.ui.screen.server.AddServerScreen
 import com.sekusarisu.yanami.ui.screen.server.ServerListScreen
 import com.sekusarisu.yanami.ui.screen.server.ServerReLoginScreen
 import com.sekusarisu.yanami.ui.screen.terminal.SshTerminalScreen
@@ -118,6 +119,10 @@ class NodeDetailScreen(private val uuid: String) : Screen {
                                         forceTwoFa = effect.forceTwoFa
                                 )
                         )
+                    }
+                    is NodeDetailContract.Effect.NavigateToServerEdit -> {
+                        navigator.replaceAll(ServerListScreen())
+                        navigator.push(AddServerScreen(editServerId = effect.serverId))
                     }
                 }
             }

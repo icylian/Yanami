@@ -50,9 +50,15 @@
     <string name="add_server_test_success">连接成功！服务端版本: %s</string>
     <string name="add_server_test_fail">连接失败: %s</string>
     <string name="add_server_fill_required">请填写服务器地址、用户名和密码</string>
+    <string name="add_server_fill_api_key">请填写服务器地址和 API Key</string>
     <string name="add_server_fill_all">请填写完整信息</string>
     <string name="add_server_saved">服务器已添加</string>
     <string name="add_server_save_failed">保存失败: %s</string>
+
+    <!-- 认证模式 -->
+    <string name="auth_type_password">账号密码</string>
+    <string name="auth_type_api_key">API Key</string>
+    <string name="add_server_api_key_label">API Key</string>
 
     <!-- 节点列表 -->
     <string name="node_list">节点列表</string>

@@ -50,9 +50,15 @@
     <string name="add_server_test_success">Connected! Server version: %s</string>
     <string name="add_server_test_fail">Connection failed: %s</string>
     <string name="add_server_fill_required">Please fill in URL, username and password</string>
+    <string name="add_server_fill_api_key">Please fill in server URL and API Key</string>
     <string name="add_server_fill_all">Please fill in all required fields</string>
     <string name="add_server_saved">Server added</string>
     <string name="add_server_save_failed">Save failed: %s</string>
+
+    <!-- Auth Type -->
+    <string name="auth_type_password">Password</string>
+    <string name="auth_type_api_key">API Key</string>
+    <string name="add_server_api_key_label">API Key</string>
 
     <!-- Node List -->
     <string name="node_list">Node List</string>

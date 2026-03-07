@@ -8,6 +8,7 @@ import com.sekusarisu.yanami.data.remote.KomariAuthService
 import com.sekusarisu.yanami.data.remote.KomariRpcService
 import com.sekusarisu.yanami.data.remote.LoginResult
 import com.sekusarisu.yanami.data.remote.SessionManager
+import com.sekusarisu.yanami.domain.model.AuthType
 import com.sekusarisu.yanami.domain.model.ServerInstance
 import com.sekusarisu.yanami.domain.repository.Requires2FAException
 import com.sekusarisu.yanami.domain.repository.ServerRepository
@@ -93,7 +94,23 @@ class ServerRepositoryImpl(
         return version
     }
 
+    override suspend fun testConnectionWithApiKey(baseUrl: String, apiKey: String): String {
+        // 使用 Bearer 认证调用 getVersion 验证 API Key
+        val version = rpcService.getVersion(baseUrl, apiKey, AuthType.API_KEY)
+        Log.d(TAG, "Test connection with API Key ok, version=$version")
+        return version
+    }
+
     override suspend fun login(instance: ServerInstance, twoFaCode: String?): Boolean {
+        // API_KEY 模式：直接设置 session，无需登录
+        if (instance.authType == AuthType.API_KEY) {
+            val apiKey = instance.apiKey
+                    ?: throw Exception("API Key is missing")
+            sessionManager.setSession(instance.id, instance.baseUrl, apiKey, AuthType.API_KEY)
+            Log.d(TAG, "API Key session set for server ${instance.name}")
+            return true
+        }
+
         val loginResult =
                 authService.login(instance.baseUrl, instance.username, instance.password, twoFaCode)
 
@@ -119,6 +136,14 @@ class ServerRepositoryImpl(
     }
 
     override suspend fun ensureSessionToken(instance: ServerInstance): String {
+        // API_KEY 模式：直接使用 API Key，无需恢复/验证 session
+        if (instance.authType == AuthType.API_KEY) {
+            val apiKey = instance.apiKey
+                    ?: throw SessionExpiredException("API Key is missing")
+            sessionManager.setSession(instance.id, instance.baseUrl, apiKey, AuthType.API_KEY)
+            return apiKey
+        }
+
         val restored = restoreSession(instance)
         if (!restored) {
             login(instance) // 成功时内部已更新 SessionManager；失败时抛出 Requires2FAException 或其他异常
@@ -128,6 +153,19 @@ class ServerRepositoryImpl(
     }
 
     override suspend fun restoreSession(instance: ServerInstance): Boolean {
+        // API_KEY 模式：直接从存储的 apiKey 设置 session
+        if (instance.authType == AuthType.API_KEY) {
+            val apiKey = instance.apiKey
+            if (apiKey.isNullOrBlank()) {
+                Log.d(TAG, "No API Key for server ${instance.name}")
+                sessionManager.clearSession()
+                return false
+            }
+            sessionManager.setSession(instance.id, instance.baseUrl, apiKey, AuthType.API_KEY)
+            Log.d(TAG, "API Key session restored for server ${instance.name}")
+            return true
+        }
+
         val cachedToken = instance.sessionToken
         if (cachedToken.isNullOrBlank()) {
             Log.d(TAG, "No cached session_token for server ${instance.name}")
@@ -200,7 +238,21 @@ class ServerRepositoryImpl(
                         },
                 requires2fa = requires2fa,
                 isActive = isActive,
-                createdAt = createdAt
+                createdAt = createdAt,
+                authType =
+                        try {
+                            AuthType.valueOf(authType)
+                        } catch (e: Exception) {
+                            AuthType.PASSWORD
+                        },
+                apiKey =
+                        encryptedApiKey?.let {
+                            try {
+                                cryptoManager.decrypt(it)
+                            } catch (e: Exception) {
+                                null
+                            }
+                        }
         )
     }
 
@@ -221,7 +273,16 @@ class ServerRepositoryImpl(
                         },
                 requires2fa = requires2fa,
                 isActive = isActive,
-                createdAt = createdAt
+                createdAt = createdAt,
+                authType = authType.name,
+                encryptedApiKey =
+                        apiKey?.let {
+                            try {
+                                cryptoManager.encrypt(it)
+                            } catch (e: Exception) {
+                                null
+                            }
+                        }
         )
     }
 }

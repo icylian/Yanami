@@ -1,0 +1,9 @@
+package com.sekusarisu.yanami.domain.model
+
+/** 认证方式 */
+enum class AuthType {
+    /** 账号密码认证 */
+    PASSWORD,
+    /** API Key 认证 */
+    API_KEY
+}

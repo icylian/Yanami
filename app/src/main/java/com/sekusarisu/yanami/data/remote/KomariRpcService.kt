@@ -6,6 +6,7 @@ import com.sekusarisu.yanami.data.remote.dto.NodeInfoDto
 import com.sekusarisu.yanami.data.remote.dto.NodeStatusDto
 import com.sekusarisu.yanami.data.remote.dto.PingRecordsResponseDto
 import com.sekusarisu.yanami.data.remote.dto.RecentStatusItemDto
+import com.sekusarisu.yanami.domain.model.AuthType
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.websocket.ws
@@ -60,8 +61,12 @@ class KomariRpcService(private val httpClient: HttpClient) {
      * 获取所有节点基本信息（HTTP POST）
      * @return Map<UUID, NodeInfoDto>
      */
-    suspend fun getNodes(baseUrl: String, sessionToken: String): Map<String, NodeInfoDto> {
-        val responseText = callRpcHttp(baseUrl, sessionToken, "common:getNodes")
+    suspend fun getNodes(
+            baseUrl: String,
+            sessionToken: String,
+            authType: AuthType = AuthType.PASSWORD
+    ): Map<String, NodeInfoDto> {
+        val responseText = callRpcHttp(baseUrl, sessionToken, "common:getNodes", authType = authType)
         val parsed = json.parseToJsonElement(responseText).jsonObject
         checkRpcError(parsed)
         val result = parsed["result"]?.jsonObject ?: return emptyMap()
@@ -76,9 +81,11 @@ class KomariRpcService(private val httpClient: HttpClient) {
      */
     suspend fun getNodesLatestStatus(
             baseUrl: String,
-            sessionToken: String
+            sessionToken: String,
+            authType: AuthType = AuthType.PASSWORD
     ): Map<String, NodeStatusDto> {
-        val responseText = callRpcHttp(baseUrl, sessionToken, "common:getNodesLatestStatus")
+        val responseText =
+                callRpcHttp(baseUrl, sessionToken, "common:getNodesLatestStatus", authType = authType)
         val parsed = json.parseToJsonElement(responseText).jsonObject
         checkRpcError(parsed)
         val result = parsed["result"]?.jsonObject ?: return emptyMap()
@@ -91,8 +98,12 @@ class KomariRpcService(private val httpClient: HttpClient) {
      * 获取服务端版本（HTTP POST）
      * @return 版本号字符串
      */
-    suspend fun getVersion(baseUrl: String, sessionToken: String): String {
-        val responseText = callRpcHttp(baseUrl, sessionToken, "common:getVersion")
+    suspend fun getVersion(
+            baseUrl: String,
+            sessionToken: String,
+            authType: AuthType = AuthType.PASSWORD
+    ): String {
+        val responseText = callRpcHttp(baseUrl, sessionToken, "common:getVersion", authType = authType)
         val parsed = json.parseToJsonElement(responseText).jsonObject
         checkRpcError(parsed)
         val result = parsed["result"]?.jsonObject
@@ -109,11 +120,17 @@ class KomariRpcService(private val httpClient: HttpClient) {
     suspend fun getNodeRecentStatus(
             baseUrl: String,
             sessionToken: String,
-            uuid: String
+            uuid: String,
+            authType: AuthType = AuthType.PASSWORD
     ): List<RecentStatusItemDto> {
         val url = baseUrl.trimEnd('/') + "/api/recent/$uuid"
         val response =
-                httpClient.get(url) { header("Cookie", "session_token=$sessionToken") }
+                httpClient.get(url) {
+                    when (authType) {
+                        AuthType.API_KEY -> header("Authorization", "Bearer $sessionToken")
+                        AuthType.PASSWORD -> header("Cookie", "session_token=$sessionToken")
+                    }
+                }
         val responseText = response.bodyAsText()
         val parsed = json.parseToJsonElement(responseText).jsonObject
         val data = parsed["data"] ?: return emptyList()
@@ -140,7 +157,8 @@ class KomariRpcService(private val httpClient: HttpClient) {
             sessionToken: String,
             detailUuid: String? = null,
             loadHours: Int? = null,
-            pingHours: Int? = null
+            pingHours: Int? = null,
+            authType: AuthType = AuthType.PASSWORD
     ): Flow<KomariWsEvent> = channelFlow {
         val cleanUrl = baseUrl.trimEnd('/')
         // 提取 host、port、path
@@ -286,7 +304,12 @@ class KomariRpcService(private val httpClient: HttpClient) {
                             port = port,
                             path = wsPath,
                             request = {
-                                header("Cookie", "session_token=$sessionToken")
+                                when (authType) {
+                                    AuthType.API_KEY ->
+                                            header("Authorization", "Bearer $sessionToken")
+                                    AuthType.PASSWORD ->
+                                            header("Cookie", "session_token=$sessionToken")
+                                }
                                 header("Origin", origin)
                             },
                             block = wsBlock
@@ -297,7 +320,12 @@ class KomariRpcService(private val httpClient: HttpClient) {
                             port = port,
                             path = wsPath,
                             request = {
-                                header("Cookie", "session_token=$sessionToken")
+                                when (authType) {
+                                    AuthType.API_KEY ->
+                                            header("Authorization", "Bearer $sessionToken")
+                                    AuthType.PASSWORD ->
+                                            header("Cookie", "session_token=$sessionToken")
+                                }
                                 header("Origin", origin)
                             },
                             block = wsBlock
@@ -322,7 +350,8 @@ class KomariRpcService(private val httpClient: HttpClient) {
             baseUrl: String,
             sessionToken: String,
             method: String,
-            params: JsonObject? = null
+            params: JsonObject? = null,
+            authType: AuthType = AuthType.PASSWORD
     ): String {
         val url = baseUrl.trimEnd('/') + "/api/rpc2"
         val requestBody = buildJsonObject {
@@ -335,7 +364,10 @@ class KomariRpcService(private val httpClient: HttpClient) {
         val response =
                 httpClient.post(url) {
                     contentType(ContentType.Application.Json)
-                    header("Cookie", "session_token=$sessionToken")
+                    when (authType) {
+                        AuthType.API_KEY -> header("Authorization", "Bearer $sessionToken")
+                        AuthType.PASSWORD -> header("Cookie", "session_token=$sessionToken")
+                    }
                     setBody(requestBody.toString())
                 }
 

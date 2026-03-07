@@ -68,6 +68,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.sekusarisu.yanami.R
 import com.sekusarisu.yanami.ui.screen.nodedetail.NodeDetailScreen
+import com.sekusarisu.yanami.ui.screen.server.AddServerScreen
 import com.sekusarisu.yanami.ui.screen.server.ServerListScreen
 import com.sekusarisu.yanami.ui.screen.server.ServerReLoginScreen
 import com.sekusarisu.yanami.ui.screen.soundClick
@@ -108,6 +109,10 @@ class NodeListScreen : Screen {
                                         forceTwoFa = effect.forceTwoFa
                                 )
                         )
+                    }
+                    is NodeListContract.Effect.NavigateToServerEdit -> {
+                        navigator.replaceAll(ServerListScreen())
+                        navigator.push(AddServerScreen(editServerId = effect.serverId))
                     }
                 }
             }

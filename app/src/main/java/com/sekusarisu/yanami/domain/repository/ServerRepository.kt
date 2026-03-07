@@ -47,6 +47,13 @@ interface ServerRepository {
     ): String
 
     /**
+     * 使用 API Key 测试与服务端的连接
+     *
+     * @return 成功返回版本信息，失败抛出异常
+     */
+    suspend fun testConnectionWithApiKey(baseUrl: String, apiKey: String): String
+
+    /**
      * 登录到指定实例
      *
      * 成功时更新 SessionManager 并将 session_token 持久化到 DB。

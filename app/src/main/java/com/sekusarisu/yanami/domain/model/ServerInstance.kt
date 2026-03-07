@@ -14,5 +14,7 @@ data class ServerInstance(
         val sessionToken: String? = null,
         val requires2fa: Boolean = false,
         val isActive: Boolean = false,
-        val createdAt: Long = System.currentTimeMillis()
+        val createdAt: Long = System.currentTimeMillis(),
+        val authType: AuthType = AuthType.PASSWORD,
+        val apiKey: String? = null
 )

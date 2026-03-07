@@ -35,5 +35,6 @@ object NodeDetailContract {
     sealed interface Effect : UiEffect {
         data class ShowToast(val message: String) : Effect
         data class NavigateToServerRelogin(val serverId: Long, val forceTwoFa: Boolean) : Effect
+        data class NavigateToServerEdit(val serverId: Long) : Effect
     }
 }

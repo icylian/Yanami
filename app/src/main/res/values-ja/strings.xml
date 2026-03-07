@@ -50,9 +50,15 @@
     <string name="add_server_test_success">接続成功！サーバーバージョン: %s</string>
     <string name="add_server_test_fail">接続失敗: %s</string>
     <string name="add_server_fill_required">URL、ユーザー名、パスワードを入力してください</string>
+    <string name="add_server_fill_api_key">サーバーアドレスと API Key を入力してください</string>
     <string name="add_server_fill_all">すべての情報を入力してください</string>
     <string name="add_server_saved">サーバーを追加しました</string>
     <string name="add_server_save_failed">保存失敗: %s</string>
+
+    <!-- 認証タイプ -->
+    <string name="auth_type_password">パスワード</string>
+    <string name="auth_type_api_key">API Key</string>
+    <string name="add_server_api_key_label">API Key</string>
 
     <!-- ノードリスト -->
     <string name="node_list">ノードリスト</string>

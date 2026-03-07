@@ -1,5 +1,6 @@
 package com.sekusarisu.yanami.ui.screen.server
 
+import com.sekusarisu.yanami.domain.model.AuthType
 import com.sekusarisu.yanami.domain.model.ServerInstance
 import com.sekusarisu.yanami.mvi.UiEffect
 import com.sekusarisu.yanami.mvi.UiEvent
@@ -25,7 +26,9 @@ object ServerContract {
             val isTesting: Boolean = false,
             val isSaving: Boolean = false,
             val testResult: String? = null,
-            val testError: String? = null
+            val testError: String? = null,
+            val authType: AuthType = AuthType.PASSWORD,
+            val apiKey: String = ""
     ) : UiState
 
     // ─── 事件 ───
@@ -40,6 +43,8 @@ object ServerContract {
         data class UpdateUsername(val username: String) : Event
         data class UpdatePassword(val password: String) : Event
         data class UpdateTwoFaCode(val code: String) : Event
+        data class UpdateAuthType(val authType: AuthType) : Event
+        data class UpdateApiKey(val apiKey: String) : Event
         data object TestConnection : Event
         data object SaveServer : Event
     }

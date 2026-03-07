@@ -3,6 +3,7 @@ package com.sekusarisu.yanami.ui.screen.server
 import android.content.Context
 import cafe.adriel.voyager.core.model.screenModelScope
 import com.sekusarisu.yanami.R
+import com.sekusarisu.yanami.domain.model.AuthType
 import com.sekusarisu.yanami.domain.model.ServerInstance
 import com.sekusarisu.yanami.domain.repository.Requires2FAException
 import com.sekusarisu.yanami.domain.repository.ServerRepository
@@ -99,6 +100,15 @@ class AddServerViewModel(
             is ServerContract.Event.UpdateUsername -> setState { copy(username = event.username) }
             is ServerContract.Event.UpdatePassword -> setState { copy(password = event.password) }
             is ServerContract.Event.UpdateTwoFaCode -> setState { copy(twoFaCode = event.code) }
+            is ServerContract.Event.UpdateAuthType ->
+                    setState {
+                        copy(
+                                authType = event.authType,
+                                testResult = null,
+                                testError = null
+                        )
+                    }
+            is ServerContract.Event.UpdateApiKey -> setState { copy(apiKey = event.apiKey) }
             is ServerContract.Event.TestConnection -> testConnection()
             is ServerContract.Event.SaveServer -> saveServer()
             else -> {
@@ -109,27 +119,54 @@ class AddServerViewModel(
 
     private fun testConnection() {
         val state = currentState
-        if (state.baseUrl.isBlank() || state.username.isBlank() || state.password.isBlank()) {
-            sendEffect(
-                    ServerContract.Effect.ShowToast(
-                            context.getString(R.string.add_server_fill_required)
+
+        when (state.authType) {
+            AuthType.API_KEY -> {
+                if (state.baseUrl.isBlank() || state.apiKey.isBlank()) {
+                    sendEffect(
+                            ServerContract.Effect.ShowToast(
+                                    context.getString(R.string.add_server_fill_api_key)
+                            )
                     )
-            )
-            return
+                    return
+                }
+            }
+            AuthType.PASSWORD -> {
+                if (state.baseUrl.isBlank() ||
+                                state.username.isBlank() ||
+                                state.password.isBlank()
+                ) {
+                    sendEffect(
+                            ServerContract.Effect.ShowToast(
+                                    context.getString(R.string.add_server_fill_required)
+                            )
+                    )
+                    return
+                }
+            }
         }
 
         setState { copy(isTesting = true, testResult = null, testError = null) }
 
         screenModelScope.launch {
             try {
-                val twoFaCode = state.twoFaCode.ifBlank { null }
                 val version =
-                        repository.testConnection(
-                                state.baseUrl,
-                                state.username,
-                                state.password,
-                                twoFaCode
-                        )
+                        when (state.authType) {
+                            AuthType.API_KEY ->
+                                    repository.testConnectionWithApiKey(
+                                            state.baseUrl,
+                                            state.apiKey
+                                    )
+                            AuthType.PASSWORD -> {
+                                val twoFaCode = state.twoFaCode.ifBlank { null }
+                                repository.testConnection(
+                                        state.baseUrl,
+                                        state.username,
+                                        state.password,
+                                        twoFaCode
+                                )
+                            }
+                        }
                 setState {
                     copy(
                             isTesting = false,
@@ -162,15 +199,32 @@ class AddServerViewModel(
 
     private fun saveServer() {
         val state = currentState
-        if (state.name.isBlank() ||
-                        state.baseUrl.isBlank() ||
-                        state.username.isBlank() ||
-                        state.password.isBlank()
-        ) {
-            sendEffect(
-                    ServerContract.Effect.ShowToast(context.getString(R.string.add_server_fill_all))
-            )
-            return
+
+        when (state.authType) {
+            AuthType.API_KEY -> {
+                if (state.name.isBlank() || state.baseUrl.isBlank() || state.apiKey.isBlank()) {
+                    sendEffect(
+                            ServerContract.Effect.ShowToast(
+                                    context.getString(R.string.add_server_fill_all)
+                            )
+                    )
+                    return
+                }
+            }
+            AuthType.PASSWORD -> {
+                if (state.name.isBlank() ||
+                                state.baseUrl.isBlank() ||
+                                state.username.isBlank() ||
+                                state.password.isBlank()
+                ) {
+                    sendEffect(
+                            ServerContract.Effect.ShowToast(
+                                    context.getString(R.string.add_server_fill_all)
+                            )
+                    )
+                    return
+                }
+            }
         }
 
         setState { copy(isSaving = true) }
@@ -183,7 +237,9 @@ class AddServerViewModel(
                                 baseUrl = state.baseUrl.trim().trimEnd('/'),
                                 username = state.username.trim(),
                                 password = state.password,
-                                requires2fa = state.show2faField
+                                requires2fa = state.show2faField,
+                                authType = state.authType,
+                                apiKey = state.apiKey.ifBlank { null }
                         )
 
                 if (editingServer != null) {
@@ -191,7 +247,9 @@ class AddServerViewModel(
                     val authChanged =
                             original.baseUrl != normalizedInstance.baseUrl ||
                                     original.username != normalizedInstance.username ||
-                                    original.password != normalizedInstance.password
+                                    original.password != normalizedInstance.password ||
+                                    original.authType != normalizedInstance.authType ||
+                                    original.apiKey != normalizedInstance.apiKey
 
                     val updated =
                             original.copy(
@@ -200,7 +258,9 @@ class AddServerViewModel(
                                     username = normalizedInstance.username,
                                     password = normalizedInstance.password,
                                     sessionToken = if (authChanged) null else original.sessionToken,
-                                    requires2fa = normalizedInstance.requires2fa
+                                    requires2fa = normalizedInstance.requires2fa,
+                                    authType = normalizedInstance.authType,
+                                    apiKey = normalizedInstance.apiKey
                             )
                     repository.update(updated)
                     setState { copy(isSaving = false) }
@@ -209,7 +269,7 @@ class AddServerViewModel(
                     val id = repository.add(normalizedInstance)
                     repository.setActive(id)
 
-                    // 尝试登录获取 session_token 并持久化
+                    // 尝试登录获取 session_token 并持久化（API_KEY 模式下设置 session）
                     try {
                         val savedInstance = normalizedInstance.copy(id = id)
                         val twoFaCode = state.twoFaCode.ifBlank { null }
@@ -242,7 +302,9 @@ class AddServerViewModel(
                         baseUrl = server.baseUrl,
                         username = server.username,
                         password = server.password,
-                        show2faField = server.requires2fa
+                        show2faField = server.requires2fa,
+                        authType = server.authType,
+                        apiKey = server.apiKey ?: ""
                 )
             }
         }

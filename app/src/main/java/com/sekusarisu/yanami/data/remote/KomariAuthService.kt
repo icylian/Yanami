@@ -90,6 +90,42 @@ class KomariAuthService(private val httpClient: HttpClient) {
     }
 
     /**
+     * 验证 API Key 是否有效
+     *
+     * 通过 HTTP POST RPC2 调用 common:getVersion，使用 Bearer 认证头
+     * @return true = API Key 有效
+     */
+    suspend fun validateApiKey(baseUrl: String, apiKey: String): Boolean {
+        return try {
+            val url = baseUrl.trimEnd('/') + "/api/rpc2"
+            val rpcRequest = buildJsonObject {
+                put("jsonrpc", "2.0")
+                put("method", "common:getVersion")
+                put("id", 1)
+            }
+
+            val response =
+                    httpClient.post(url) {
+                        contentType(ContentType.Application.Json)
+                        header("Authorization", "Bearer $apiKey")
+                        setBody(rpcRequest.toString())
+                    }
+
+            val responseText = response.bodyAsText()
+            val parsed = json.parseToJsonElement(responseText).jsonObject
+            val result = parsed["result"]?.jsonObject
+            val version = result?.get("version")?.jsonPrimitive?.content
+
+            val isValid = !version.isNullOrBlank()
+            Log.d(TAG, "API Key validation: version=$version, valid=$isValid")
+            isValid
+        } catch (e: Exception) {
+            Log.w(TAG, "API Key validation error: ${e.message}")
+            false
+        }
+    }
+
+    /**
      * 验证 session_token 是否有效
      *
      * 通过 HTTP POST RPC2 调用 common:getMe，检查返回的 logged_in 是否为 true

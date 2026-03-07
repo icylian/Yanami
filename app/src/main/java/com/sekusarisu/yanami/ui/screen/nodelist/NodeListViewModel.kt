@@ -3,6 +3,7 @@ package com.sekusarisu.yanami.ui.screen.nodelist
 import android.content.Context
 import cafe.adriel.voyager.core.model.screenModelScope
 import com.sekusarisu.yanami.R
+import com.sekusarisu.yanami.domain.model.AuthType
 import com.sekusarisu.yanami.domain.model.Node
 import com.sekusarisu.yanami.domain.model.ServerInstance
 import com.sekusarisu.yanami.domain.repository.NodeRepository
@@ -62,6 +63,7 @@ class NodeListViewModel(
         screenModelScope.launch {
             var activeServerId: Long? = null
             var activeRequires2fa = false
+            var activeAuthType = AuthType.PASSWORD
             try {
                 val server =
                         serverRepository.getActive()
@@ -70,6 +72,7 @@ class NodeListViewModel(
                                 )
                 activeServerId = server.id
                 activeRequires2fa = server.requires2fa
+                activeAuthType = server.authType
                 setState { copy(serverName = server.name) }
 
                 val sessionToken = ensureSession(server)
@@ -80,9 +83,9 @@ class NodeListViewModel(
                 setState { copy(isLoading = false, error = null) }
 
                 // 2. 启动 WebSocket 实时状态流
-                startWebSocketStatusFlow(server.baseUrl, sessionToken, nodes, server.id, server.requires2fa)
+                startWebSocketStatusFlow(server.baseUrl, sessionToken, nodes, server.id, server.requires2fa, server.authType)
             } catch (e: Exception) {
-                if (activeServerId != null && handleSessionExpired(activeServerId, activeRequires2fa, e)) {
+                if (activeServerId != null && handleSessionExpired(activeServerId, activeRequires2fa, e, activeAuthType)) {
                     return@launch
                 }
                 setState {
@@ -102,6 +105,7 @@ class NodeListViewModel(
         screenModelScope.launch {
             var activeServerId: Long? = null
             var activeRequires2fa = false
+            var activeAuthType = AuthType.PASSWORD
             try {
                 val server =
                         serverRepository.getActive()
@@ -110,6 +114,7 @@ class NodeListViewModel(
                                 )
                 activeServerId = server.id
                 activeRequires2fa = server.requires2fa
+                activeAuthType = server.authType
                 val sessionToken = ensureSession(server)
 
                 val nodes = nodeRepository.getNodeInfos(server.baseUrl, sessionToken)
@@ -117,9 +122,9 @@ class NodeListViewModel(
                 setState { copy(isRefreshing = false, error = null) }
 
                 // 重新启动 WebSocket
-                startWebSocketStatusFlow(server.baseUrl, sessionToken, nodes, server.id, server.requires2fa)
+                startWebSocketStatusFlow(server.baseUrl, sessionToken, nodes, server.id, server.requires2fa, server.authType)
             } catch (e: Exception) {
-                if (activeServerId != null && handleSessionExpired(activeServerId, activeRequires2fa, e)) {
+                if (activeServerId != null && handleSessionExpired(activeServerId, activeRequires2fa, e, activeAuthType)) {
                     return@launch
                 }
                 setState { copy(isRefreshing = false) }
@@ -149,18 +154,24 @@ class NodeListViewModel(
     private fun handleSessionExpired(
             serverId: Long,
             requires2fa: Boolean,
-            error: Throwable
+            error: Throwable,
+            authType: AuthType = AuthType.PASSWORD
     ): Boolean {
         if (!error.isSessionAuthError()) return false
         wsJob?.cancel()
-        val forceTwoFa = requires2fa || error.isTwoFaHint()
         setState { copy(isLoading = false, isRefreshing = false, error = null) }
         sendEffect(
                 NodeListContract.Effect.ShowToast(
                         error.message ?: context.getString(R.string.error_no_session)
                 )
         )
-        sendEffect(NodeListContract.Effect.NavigateToServerRelogin(serverId, forceTwoFa))
+        if (authType == AuthType.API_KEY) {
+            // API_KEY 模式：导航到编辑服务器页面
+            sendEffect(NodeListContract.Effect.NavigateToServerEdit(serverId))
+        } else {
+            val forceTwoFa = requires2fa || error.isTwoFaHint()
+            sendEffect(NodeListContract.Effect.NavigateToServerRelogin(serverId, forceTwoFa))
+        }
         return true
     }
 
@@ -170,7 +181,8 @@ class NodeListViewModel(
             sessionToken: String,
             baseNodes: List<Node>,
             serverId: Long,
-            requires2fa: Boolean
+            requires2fa: Boolean,
+            authType: AuthType = AuthType.PASSWORD
     ) {
         wsJob?.cancel()
         wsJob =
@@ -178,7 +190,7 @@ class NodeListViewModel(
                         .observeNodeStatus(baseUrl, sessionToken, baseNodes)
                         .onEach { updatedNodes -> updateNodesState(updatedNodes) }
                         .catch { e ->
-                            if (!handleSessionExpired(serverId, requires2fa, e)) {
+                            if (!handleSessionExpired(serverId, requires2fa, e, authType)) {
                                 android.util.Log.w("NodeListVM", "Status flow error: ${e.message}")
                             }
                         }

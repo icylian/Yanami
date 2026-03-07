@@ -19,5 +19,7 @@ data class ServerInstanceEntity(
         @ColumnInfo(name = "encrypted_session_token") val encryptedSessionToken: String? = null,
         @ColumnInfo(name = "requires_2fa") val requires2fa: Boolean = false,
         @ColumnInfo(name = "is_active") val isActive: Boolean = false,
-        @ColumnInfo(name = "created_at") val createdAt: Long = System.currentTimeMillis()
+        @ColumnInfo(name = "created_at") val createdAt: Long = System.currentTimeMillis(),
+        @ColumnInfo(name = "auth_type") val authType: String = "PASSWORD",
+        @ColumnInfo(name = "encrypted_api_key") val encryptedApiKey: String? = null
 )

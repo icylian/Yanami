@@ -4,6 +4,7 @@ import android.content.Context
 import cafe.adriel.voyager.core.model.screenModelScope
 import com.sekusarisu.yanami.R
 import com.sekusarisu.yanami.data.remote.SessionManager
+import com.sekusarisu.yanami.domain.model.AuthType
 import com.sekusarisu.yanami.domain.model.LoadRecord
 import com.sekusarisu.yanami.domain.model.ServerInstance
 import com.sekusarisu.yanami.domain.repository.NodeRepository
@@ -92,6 +93,7 @@ class NodeDetailViewModel(
                 screenModelScope.launch {
                         var activeServerId: Long? = null
                         var activeRequires2fa = false
+                        var activeAuthType = AuthType.PASSWORD
                         try {
                                 val server =
                                         serverRepository.getActive()
@@ -102,6 +104,7 @@ class NodeDetailViewModel(
                                                 )
                                 activeServerId = server.id
                                 activeRequires2fa = server.requires2fa
+                                activeAuthType = server.authType
 
                                 val sessionToken = ensureSession(server)
 
@@ -144,7 +147,8 @@ class NodeDetailViewModel(
                                                 handleSessionExpired(
                                                         activeServerId,
                                                         activeRequires2fa,
-                                                        e
+                                                        e,
+                                                        activeAuthType
                                                 )
                                 ) {
                                         return@launch
@@ -371,7 +375,8 @@ class NodeDetailViewModel(
                                                         handleSessionExpired(
                                                                 activeServer.id,
                                                                 activeServer.requires2fa,
-                                                                e
+                                                                e,
+                                                                activeServer.authType
                                                         )
                                         ) {
                                                 return@launch
@@ -417,11 +422,11 @@ class NodeDetailViewModel(
         private fun handleSessionExpired(
                 serverId: Long,
                 requires2fa: Boolean,
-                error: Throwable
+                error: Throwable,
+                authType: AuthType = AuthType.PASSWORD
         ): Boolean {
                 if (!error.isSessionAuthError()) return false
                 wsJob?.cancel()
-                val forceTwoFa = requires2fa || error.isTwoFaHint()
                 setState {
                         copy(
                                 isLoading = false,
@@ -435,9 +440,17 @@ class NodeDetailViewModel(
                                 error.message ?: context.getString(R.string.error_no_session)
                         )
                 )
-                sendEffect(
-                        NodeDetailContract.Effect.NavigateToServerRelogin(serverId, forceTwoFa)
-                )
+                if (authType == AuthType.API_KEY) {
+                        sendEffect(NodeDetailContract.Effect.NavigateToServerEdit(serverId))
+                } else {
+                        val forceTwoFa = requires2fa || error.isTwoFaHint()
+                        sendEffect(
+                                NodeDetailContract.Effect.NavigateToServerRelogin(
+                                        serverId,
+                                        forceTwoFa
+                                )
+                        )
+                }
                 return true
         }
 }

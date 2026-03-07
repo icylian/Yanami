@@ -1,6 +1,7 @@
 package com.sekusarisu.yanami.di
 
 import androidx.room.Room
+import com.sekusarisu.yanami.data.local.MIGRATION_2_3
 import com.sekusarisu.yanami.data.local.YanamiDatabase
 import com.sekusarisu.yanami.data.local.crypto.CryptoManager
 import com.sekusarisu.yanami.data.local.preferences.UserPreferencesRepository
@@ -57,6 +58,7 @@ val appModule = module {
     // ─── Database ───
     single {
         Room.databaseBuilder(androidContext(), YanamiDatabase::class.java, "yanami_database")
+                .addMigrations(MIGRATION_2_3)
                 .fallbackToDestructiveMigration()
                 .build()
     }

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -32,6 +33,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -50,6 +54,7 @@ import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.sekusarisu.yanami.R
+import com.sekusarisu.yanami.domain.model.AuthType
 import com.sekusarisu.yanami.ui.screen.nodelist.NodeListScreen
 import com.sekusarisu.yanami.ui.screen.soundClick
 import org.koin.core.parameter.parametersOf
@@ -179,91 +184,148 @@ fun AddServerContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                    value = state.username,
-                    onValueChange = {
-                        onEvent(ServerContract.Event.UpdateUsername(it))
-                    },
-                    label = { Text(stringResource(R.string.add_server_username_label)) },
-                    placeholder = { Text(stringResource(R.string.add_server_username_hint)) },
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                    value = state.password,
-                    onValueChange = {
-                        onEvent(ServerContract.Event.UpdatePassword(it))
-                    },
-                    label = { Text(stringResource(R.string.add_server_password_label)) },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions =
-                            KeyboardOptions(
-                                    keyboardType = KeyboardType.Password,
-                                    imeAction =
-                                            if (state.show2faField) ImeAction.Next
-                                            else ImeAction.Done
-                            )
-            )
-
-            AnimatedVisibility(visible = state.show2faField) {
-                Column {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedTextField(
-                            value = state.twoFaCode,
-                            onValueChange = {
-                                onEvent(ServerContract.Event.UpdateTwoFaCode(it))
-                            },
-                            label = { Text(stringResource(R.string.add_server_2fa_label)) },
-                            placeholder = {
-                                Text(stringResource(R.string.add_server_2fa_hint))
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Default.Key, contentDescription = null)
-                            },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions =
-                                    KeyboardOptions(
-                                            keyboardType = KeyboardType.Number,
-                                            imeAction = ImeAction.Done
+            // 认证模式切换
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                SegmentedButton(
+                        selected = state.authType == AuthType.PASSWORD,
+                        onClick =
+                                soundClick {
+                                    onEvent(
+                                            ServerContract.Event.UpdateAuthType(AuthType.PASSWORD)
                                     )
-                    )
+                                },
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                ) {
+                    Text(stringResource(R.string.auth_type_password))
+                }
+                SegmentedButton(
+                        selected = state.authType == AuthType.API_KEY,
+                        onClick =
+                                soundClick {
+                                    onEvent(
+                                            ServerContract.Event.UpdateAuthType(AuthType.API_KEY)
+                                    )
+                                },
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                ) {
+                    Text(stringResource(R.string.auth_type_api_key))
                 }
             }
 
-//            if (state.show2faField) {
-//                Spacer(modifier = Modifier.height(8.dp))
-//                androidx.compose.material3.TextButton(
-//                        onClick = {
-//                            onEvent(ServerContract.Event.UpdateTwoFaCode(""))
-//                        },
-//                        modifier = Modifier.fillMaxWidth()
-//                ) {
-//                    Text(
-//                            stringResource(R.string.add_server_2fa_expand),
-//                            style = MaterialTheme.typography.bodySmall,
-//                            color = MaterialTheme.colorScheme.primary
-//                    )
-//                }
-//            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 根据认证模式显示不同的输入字段
+            AnimatedVisibility(visible = state.authType == AuthType.PASSWORD) {
+                Column {
+                    OutlinedTextField(
+                            value = state.username,
+                            onValueChange = {
+                                onEvent(ServerContract.Event.UpdateUsername(it))
+                            },
+                            label = {
+                                Text(stringResource(R.string.add_server_username_label))
+                            },
+                            placeholder = {
+                                Text(stringResource(R.string.add_server_username_hint))
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Person, contentDescription = null)
+                            },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                            value = state.password,
+                            onValueChange = {
+                                onEvent(ServerContract.Event.UpdatePassword(it))
+                            },
+                            label = {
+                                Text(stringResource(R.string.add_server_password_label))
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Lock, contentDescription = null)
+                            },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions =
+                                    KeyboardOptions(
+                                            keyboardType = KeyboardType.Password,
+                                            imeAction =
+                                                    if (state.show2faField) ImeAction.Next
+                                                    else ImeAction.Done
+                                    )
+                    )
+
+                    AnimatedVisibility(visible = state.show2faField) {
+                        Column {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            OutlinedTextField(
+                                    value = state.twoFaCode,
+                                    onValueChange = {
+                                        onEvent(ServerContract.Event.UpdateTwoFaCode(it))
+                                    },
+                                    label = {
+                                        Text(stringResource(R.string.add_server_2fa_label))
+                                    },
+                                    placeholder = {
+                                        Text(stringResource(R.string.add_server_2fa_hint))
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Key, contentDescription = null)
+                                    },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    keyboardOptions =
+                                            KeyboardOptions(
+                                                    keyboardType = KeyboardType.Number,
+                                                    imeAction = ImeAction.Done
+                                            )
+                            )
+                        }
+                    }
+                }
+            }
+
+            AnimatedVisibility(visible = state.authType == AuthType.API_KEY) {
+                OutlinedTextField(
+                        value = state.apiKey,
+                        onValueChange = {
+                            onEvent(ServerContract.Event.UpdateApiKey(it))
+                        },
+                        label = { Text(stringResource(R.string.add_server_api_key_label)) },
+                        leadingIcon = {
+                            Icon(Icons.Default.VpnKey, contentDescription = null)
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions =
+                                KeyboardOptions(
+                                        keyboardType = KeyboardType.Password,
+                                        imeAction = ImeAction.Done
+                                )
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            val testEnabled =
+                    !state.isTesting &&
+                            state.baseUrl.isNotBlank() &&
+                            when (state.authType) {
+                                AuthType.PASSWORD ->
+                                        state.username.isNotBlank() && state.password.isNotBlank()
+                                AuthType.API_KEY -> state.apiKey.isNotBlank()
+                            }
+
             FilledTonalButton(
                     onClick = soundClick { onEvent(ServerContract.Event.TestConnection) },
-                    enabled =
-                            !state.isTesting &&
-                                    state.baseUrl.isNotBlank() &&
-                                    state.username.isNotBlank() &&
-                                    state.password.isNotBlank(),
+                    enabled = testEnabled,
                     modifier = Modifier.fillMaxWidth()
             ) {
                 if (state.isTesting) {
@@ -318,14 +380,19 @@ fun AddServerContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            val saveEnabled =
+                    !state.isSaving &&
+                            state.name.isNotBlank() &&
+                            state.baseUrl.isNotBlank() &&
+                            when (state.authType) {
+                                AuthType.PASSWORD ->
+                                        state.username.isNotBlank() && state.password.isNotBlank()
+                                AuthType.API_KEY -> state.apiKey.isNotBlank()
+                            }
+
             Button(
                     onClick = soundClick { onEvent(ServerContract.Event.SaveServer) },
-                    enabled =
-                            !state.isSaving &&
-                                    state.name.isNotBlank() &&
-                                    state.baseUrl.isNotBlank() &&
-                                    state.username.isNotBlank() &&
-                                    state.password.isNotBlank(),
+                    enabled = saveEnabled,
                     modifier = Modifier.fillMaxWidth()
             ) {
                 if (state.isSaving) {

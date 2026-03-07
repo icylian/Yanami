@@ -4,6 +4,7 @@ import android.util.Log
 import cafe.adriel.voyager.core.model.screenModelScope
 import com.sekusarisu.yanami.data.local.preferences.UserPreferencesRepository
 import com.sekusarisu.yanami.data.remote.SessionManager
+import com.sekusarisu.yanami.domain.model.AuthType
 import com.sekusarisu.yanami.domain.repository.ServerRepository
 import com.sekusarisu.yanami.mvi.MviViewModel
 import com.sekusarisu.yanami.ui.screen.isSessionAuthError
@@ -165,8 +166,9 @@ class SshTerminalViewModel(
                             withoutScheme.substringAfter(withoutScheme.substringBefore('/'), "")
                     val wsPath = "$pathPrefix/api/admin/client/$uuid/terminal"
                     val origin = if (isSecure) "https://$host" else "http://$host"
+                    val authType = sessionManager.getAuthType() ?: AuthType.PASSWORD
 
-                    Log.d(TAG, "Connecting to $host:$port$wsPath (secure=$isSecure)")
+                    Log.d(TAG, "Connecting to $host:$port$wsPath (secure=$isSecure, authType=$authType)")
 
                     try {
                         val wsBlock: suspend DefaultClientWebSocketSession.() -> Unit = {
@@ -231,7 +233,12 @@ class SshTerminalViewModel(
                                     port = port,
                                     path = wsPath,
                                     request = {
-                                        header("Cookie", "session_token=$sessionToken")
+                                        when (authType) {
+                                            AuthType.API_KEY ->
+                                                    header("Authorization", "Bearer $sessionToken")
+                                            AuthType.PASSWORD ->
+                                                    header("Cookie", "session_token=$sessionToken")
+                                        }
                                         header("Origin", origin)
                                     },
                                     block = wsBlock
@@ -242,7 +249,12 @@ class SshTerminalViewModel(
                                     port = port,
                                     path = wsPath,
                                     request = {
-                                        header("Cookie", "session_token=$sessionToken")
+                                        when (authType) {
+                                            AuthType.API_KEY ->
+                                                    header("Authorization", "Bearer $sessionToken")
+                                            AuthType.PASSWORD ->
+                                                    header("Cookie", "session_token=$sessionToken")
+                                        }
                                         header("Origin", origin)
                                     },
                                     block = wsBlock
