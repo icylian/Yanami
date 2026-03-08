@@ -151,4 +151,23 @@
     <!-- 错误 -->
     <string name="error_no_server_selected">未选择服务器实例</string>
     <string name="error_no_session">无法获取 session_token，请重新登录</string>
+
+    <!-- 字体大小 -->
+    <string name="settings_font_scale">字体大小</string>
+
+    <!-- 自动进入节点列表 -->
+    <string name="settings_auto_enter_nodelist">自动进入节点列表</string>
+    <string name="settings_auto_enter_nodelist_desc">启动时跳过服务器选择，直接进入节点列表</string>
+
+    <!-- 更新检查 -->
+    <string name="update_check">检查更新</string>
+    <string name="update_check_desc">检查是否有新版本</string>
+    <string name="update_checking">正在检查更新…</string>
+    <string name="update_available_title">发现新版本</string>
+    <string name="update_new_version">新版本: %s</string>
+    <string name="update_changelog">更新日志</string>
+    <string name="update_download">下载更新</string>
+    <string name="update_already_latest">当前已是最新版本</string>
+    <string name="update_check_failed">检查更新失败</string>
+    <string name="update_later">稍后再说</string>
 </resources>

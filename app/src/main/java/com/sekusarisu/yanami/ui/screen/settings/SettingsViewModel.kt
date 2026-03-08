@@ -17,7 +17,9 @@ import kotlinx.coroutines.launch
 data class SettingsState(
         val themeColor: ThemeColor = ThemeColor.DYNAMIC,
         val darkMode: String = "system",
-        val language: String = "system"
+        val language: String = "system",
+        val fontScale: Float = 1.0f,
+        val autoEnterNodeList: Boolean = false
 ) : UiState
 
 /** 设置页面 Events */
@@ -25,6 +27,8 @@ sealed interface SettingsEvent : UiEvent {
     data class SetThemeColor(val color: ThemeColor) : SettingsEvent
     data class SetDarkMode(val mode: String) : SettingsEvent
     data class SetLanguage(val lang: String) : SettingsEvent
+    data class SetFontScale(val scale: Float) : SettingsEvent
+    data class SetAutoEnterNodeList(val enabled: Boolean) : SettingsEvent
 }
 
 /** 设置页面 Effects */
@@ -44,7 +48,9 @@ class SettingsViewModel(private val prefsRepo: UserPreferencesRepository) :
                         copy(
                                 themeColor = ThemeColor.fromKey(prefs.themeColorKey),
                                 darkMode = prefs.darkModeKey,
-                                language = prefs.languageKey
+                                language = prefs.languageKey,
+                                fontScale = prefs.fontScale,
+                                autoEnterNodeList = prefs.autoEnterNodeList
                         )
                     }
                 }
@@ -64,6 +70,12 @@ class SettingsViewModel(private val prefsRepo: UserPreferencesRepository) :
                     prefsRepo.setLanguage(event.lang)
                     applyLocale(event.lang)
                 }
+            }
+            is SettingsEvent.SetFontScale -> {
+                screenModelScope.launch { prefsRepo.setFontScale(event.scale) }
+            }
+            is SettingsEvent.SetAutoEnterNodeList -> {
+                screenModelScope.launch { prefsRepo.setAutoEnterNodeList(event.enabled) }
             }
         }
     }

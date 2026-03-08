@@ -150,4 +150,23 @@
     <string name="error_no_server_selected">No server selected</string>
     <string name="error_no_session">Cannot get session_token, please re-login</string>
     <string name="action_ssh_terminal">SSH Terminal</string>
+
+    <!-- Font Scale -->
+    <string name="settings_font_scale">Font Size</string>
+
+    <!-- Auto-enter Node List -->
+    <string name="settings_auto_enter_nodelist">Auto-enter Node List</string>
+    <string name="settings_auto_enter_nodelist_desc">Skip server selection on launch</string>
+
+    <!-- Update Check -->
+    <string name="update_check">Check for Updates</string>
+    <string name="update_check_desc">Check for new version</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_available_title">Update Available</string>
+    <string name="update_new_version">New version: %s</string>
+    <string name="update_changelog">Changelog</string>
+    <string name="update_download">Download Update</string>
+    <string name="update_already_latest">Already on latest version</string>
+    <string name="update_check_failed">Failed to check for updates</string>
+    <string name="update_later">Later</string>
 </resources>

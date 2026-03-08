@@ -150,4 +150,23 @@
     <string name="error_no_server_selected">サーバーが選択されていません</string>
     <string name="error_no_session">session_tokenを取得できません。再ログインしてください</string>
     <string name="action_ssh_terminal">SSHターミナル</string>
+
+    <!-- フォントサイズ -->
+    <string name="settings_font_scale">フォントサイズ</string>
+
+    <!-- 自動でノードリストに移動 -->
+    <string name="settings_auto_enter_nodelist">自動でノードリストに移動</string>
+    <string name="settings_auto_enter_nodelist_desc">起動時にサーバー選択をスキップ</string>
+
+    <!-- アップデート確認 -->
+    <string name="update_check">アップデートを確認</string>
+    <string name="update_check_desc">新バージョンを確認</string>
+    <string name="update_checking">確認中…</string>
+    <string name="update_available_title">新バージョンがあります</string>
+    <string name="update_new_version">新バージョン: %s</string>
+    <string name="update_changelog">変更履歴</string>
+    <string name="update_download">ダウンロード</string>
+    <string name="update_already_latest">最新バージョンです</string>
+    <string name="update_check_failed">確認に失敗しました</string>
+    <string name="update_later">後で</string>
 </resources>

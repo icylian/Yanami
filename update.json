@@ -1,0 +1,6 @@
+{
+    "versionCode": 3,
+    "versionName": "1.0.2",
+    "downloadUrl": "https://github.com/icylian/Yanami/releases/latest",
+    "changelog": "新增应用内更新检查、自动进入节点列表、全局字号调整"
+}

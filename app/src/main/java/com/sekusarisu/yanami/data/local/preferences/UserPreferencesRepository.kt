@@ -3,7 +3,9 @@ package com.sekusarisu.yanami.data.local.preferences
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -28,6 +30,8 @@ class UserPreferencesRepository(private val context: Context) {
         private val DARK_MODE_KEY = stringPreferencesKey("dark_mode")
         private val LANGUAGE_KEY = stringPreferencesKey("language")
         private val TERMINAL_FONT_SIZE_KEY = intPreferencesKey("terminal_font_size")
+        private val FONT_SCALE_KEY = floatPreferencesKey("font_scale")
+        private val AUTO_ENTER_NODELIST_KEY = booleanPreferencesKey("auto_enter_nodelist")
         const val DEFAULT_TERMINAL_FONT_SIZE = 20
     }
 
@@ -37,7 +41,9 @@ class UserPreferencesRepository(private val context: Context) {
                 UserPreferences(
                         themeColorKey = prefs[THEME_COLOR_KEY] ?: "dynamic",
                         darkModeKey = prefs[DARK_MODE_KEY] ?: "system",
-                        languageKey = prefs[LANGUAGE_KEY] ?: "system"
+                        languageKey = prefs[LANGUAGE_KEY] ?: "system",
+                        fontScale = prefs[FONT_SCALE_KEY] ?: 1.0f,
+                        autoEnterNodeList = prefs[AUTO_ENTER_NODELIST_KEY] ?: false
                 )
             }
 
@@ -66,11 +72,23 @@ class UserPreferencesRepository(private val context: Context) {
     suspend fun setTerminalFontSize(size: Int) {
         context.dataStore.edit { it[TERMINAL_FONT_SIZE_KEY] = size }
     }
+
+    /** 设置字体缩放比例 */
+    suspend fun setFontScale(scale: Float) {
+        context.dataStore.edit { it[FONT_SCALE_KEY] = scale }
+    }
+
+    /** 设置自动进入节点列表 */
+    suspend fun setAutoEnterNodeList(enabled: Boolean) {
+        context.dataStore.edit { it[AUTO_ENTER_NODELIST_KEY] = enabled }
+    }
 }
 
 /** 用户偏好数据类 */
 data class UserPreferences(
         val themeColorKey: String = "dynamic",
         val darkModeKey: String = "system",
-        val languageKey: String = "system"
+        val languageKey: String = "system",
+        val fontScale: Float = 1.0f,
+        val autoEnterNodeList: Boolean = false
 )

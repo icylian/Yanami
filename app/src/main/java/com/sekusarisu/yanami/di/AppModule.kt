@@ -9,6 +9,7 @@ import com.sekusarisu.yanami.data.remote.KomariAuthService
 import com.sekusarisu.yanami.data.remote.KomariRpcService
 import com.sekusarisu.yanami.data.remote.SessionCookieInterceptor
 import com.sekusarisu.yanami.data.remote.SessionManager
+import com.sekusarisu.yanami.data.remote.UpdateCheckService
 import com.sekusarisu.yanami.data.repository.NodeRepositoryImpl
 import com.sekusarisu.yanami.data.repository.ServerRepositoryImpl
 import com.sekusarisu.yanami.domain.repository.NodeRepository
@@ -18,6 +19,7 @@ import com.sekusarisu.yanami.ui.screen.nodelist.NodeListViewModel
 import com.sekusarisu.yanami.ui.screen.server.AddServerViewModel
 import com.sekusarisu.yanami.ui.screen.server.ServerReLoginViewModel
 import com.sekusarisu.yanami.ui.screen.server.ServerListViewModel
+import com.sekusarisu.yanami.ui.screen.settings.AboutViewModel
 import com.sekusarisu.yanami.ui.screen.settings.SettingsViewModel
 import com.sekusarisu.yanami.ui.screen.terminal.SshTerminalViewModel
 import io.ktor.client.HttpClient
@@ -74,6 +76,7 @@ val appModule = module {
     // ─── Remote Service ───
     single { KomariAuthService(get()) }
     single { KomariRpcService(get()) }
+    single { UpdateCheckService(get()) }
 
     // ─── Repository ───
     single<ServerRepository> {
@@ -95,6 +98,7 @@ val appModule = module {
     }
     factory { NodeListViewModel(get(), get(), androidContext()) }
     factory { SettingsViewModel(get()) }
+    factory { AboutViewModel(get(), androidContext()) }
     factory { (uuid: String) -> NodeDetailViewModel(uuid, get(), get(), get(), androidContext()) }
     factory { (uuid: String) -> SshTerminalViewModel(uuid, get(), get(), get(), get()) }
 }
