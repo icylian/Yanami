@@ -1,6 +1,6 @@
 {
-    "versionCode": 3,
-    "versionName": "1.0.2",
+    "versionCode": 4,
+    "versionName": "1.0.3",
     "downloadUrl": "https://github.com/icylian/Yanami/releases/latest",
-    "changelog": "新增应用内更新检查、自动进入节点列表、全局字号调整"
+    "changelog": "升级vico图表库到v3.0.3，新增设置允许关闭图表动画以优化部分设备的性能。"
 }
