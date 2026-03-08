@@ -228,6 +228,12 @@ private fun NodeDetailContent(
 ) {
     val node = state.node ?: return
 
+    val loadRecords =
+            if (state.selectedLoadHours == 0) state.realtimeLoadRecords
+            else state.loadRecords
+    val loadIsLoading =
+            if (state.selectedLoadHours == 0) false else state.isLoadRecordsLoading
+
     LazyColumn(
             modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -237,31 +243,165 @@ private fun NodeDetailContent(
         // 4.1 服务器信息总览
         item { ServerInfoCard(node) }
 
-        // 4.2 负载图表
+        // 4.2 负载图表 - 标题
         item {
-            val records =
-                    if (state.selectedLoadHours == 0) state.realtimeLoadRecords
-                    else state.loadRecords
-            LoadChartSection(
-                    records = records,
-                    isLoading =
-                            if (state.selectedLoadHours == 0) false else state.isLoadRecordsLoading,
+            ChartSectionHeader(
+                    title = stringResource(R.string.node_detail_load_chart),
                     selectedHours = state.selectedLoadHours,
                     onHoursChanged = onLoadHoursChanged,
-                    chartAnimationEnabled = chartAnimationEnabled
+                    showRealtime = true
             )
         }
 
-        // 4.3 Ping 延迟监控
+        // 4.2 负载图表 - 内容（每个图表独立 item，懒加载）
+        if (loadIsLoading) {
+            item {
+                ChartSectionSurface {
+                    Box(
+                            modifier = Modifier.fillMaxWidth().height(200.dp),
+                            contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator(modifier = Modifier.size(32.dp)) }
+                }
+            }
+        } else if (loadRecords.isEmpty()) {
+            item {
+                ChartSectionSurface {
+                    Box(
+                            modifier = Modifier.fillMaxWidth().height(100.dp),
+                            contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                                text =
+                                        if (state.selectedLoadHours == 0)
+                                                stringResource(R.string.node_detail_loading)
+                                        else stringResource(R.string.node_detail_no_records),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        } else {
+            val times = loadRecords.map { it.time }
+
+            item {
+                ChartSectionSurface {
+                    ChartCard(
+                            title = stringResource(R.string.node_detail_cpu_usage),
+                            data = loadRecords.map { it.cpu },
+                            times = times,
+                            color = MaterialTheme.colorScheme.primary,
+                            suffix = "%",
+                            chartAnimationEnabled = chartAnimationEnabled
+                    )
+                }
+            }
+
+            item {
+                ChartSectionSurface {
+                    ChartCard(
+                            title = stringResource(R.string.node_detail_ram),
+                            data = loadRecords.map { it.ramPercent },
+                            times = times,
+                            color = MaterialTheme.colorScheme.primary,
+                            suffix = "%",
+                            chartAnimationEnabled = chartAnimationEnabled
+                    )
+                }
+            }
+
+            item {
+                ChartSectionSurface {
+                    NetworkChartCard(
+                            title = stringResource(R.string.node_detail_net_speed),
+                            netInData = loadRecords.map { it.netIn.toDouble() },
+                            netOutData = loadRecords.map { it.netOut.toDouble() },
+                            times = times,
+                            chartAnimationEnabled = chartAnimationEnabled
+                    )
+                }
+            }
+
+            item {
+                ChartSectionSurface {
+                    ConnectionChartCard(
+                            title = stringResource(R.string.node_detail_connections),
+                            tcpData = loadRecords.map { it.connections },
+                            udpData = loadRecords.map { it.connectionsUdp },
+                            times = times,
+                            suffix = "",
+                            chartAnimationEnabled = chartAnimationEnabled
+                    )
+                }
+            }
+
+            item {
+                ChartSectionSurface {
+                    ChartCard(
+                            title = stringResource(R.string.node_detail_process),
+                            data = loadRecords.map { it.process.toDouble() },
+                            times = times,
+                            color = MaterialTheme.colorScheme.primary,
+                            suffix = "",
+                            chartAnimationEnabled = chartAnimationEnabled
+                    )
+                }
+            }
+        }
+
+        // 4.3 Ping 延迟监控 - 标题
         item {
-            PingChartSection(
-                    tasks = state.pingTasks,
-                    records = state.pingRecords,
-                    isLoading = state.isPingRecordsLoading,
+            ChartSectionHeader(
+                    title = stringResource(R.string.node_detail_ping_chart),
                     selectedHours = state.selectedPingHours,
                     onHoursChanged = onPingHoursChanged,
-                    chartAnimationEnabled = chartAnimationEnabled
+                    showRealtime = false
             )
+        }
+
+        // 4.3 Ping 延迟监控 - 内容（每个任务独立 item）
+        if (state.isPingRecordsLoading) {
+            item {
+                ChartSectionSurface {
+                    Box(
+                            modifier = Modifier.fillMaxWidth().height(200.dp),
+                            contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator(modifier = Modifier.size(32.dp)) }
+                }
+            }
+        } else if (state.pingRecords.isEmpty()) {
+            item {
+                ChartSectionSurface {
+                    Box(
+                            modifier = Modifier.fillMaxWidth().height(100.dp),
+                            contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                                text = stringResource(R.string.node_detail_no_records),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        } else {
+            state.pingTasks.forEach { task ->
+                val taskRecords = state.pingRecords.filter { it.taskId == task.id }
+                val taskValues = taskRecords.map { it.value }
+                val taskTimes = taskRecords.map { it.time }
+                if (taskValues.size >= 2) {
+                    item(key = "ping_${task.id}") {
+                        ChartSectionSurface {
+                            PingTaskChart(
+                                    task = task,
+                                    values = taskValues,
+                                    times = taskTimes,
+                                    chartAnimationEnabled = chartAnimationEnabled
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -461,122 +601,129 @@ private fun StatusChip(isOnline: Boolean) {
     }
 }
 
-// ─── 4.2 负载图表 ───
+// ─── 图表通用容器 ───
 
+/** 图表分区标题卡片：标题 + 时间范围选择器 */
 @Composable
-private fun LoadChartSection(
-        records: List<LoadRecord>,
-        isLoading: Boolean,
+private fun ChartSectionHeader(
+        title: String,
         selectedHours: Int,
         onHoursChanged: (Int) -> Unit,
-        chartAnimationEnabled: Boolean
+        showRealtime: Boolean = false
 ) {
+    Surface(
+            modifier = Modifier
+                .height(60.dp)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
+            tonalElevation = 1.dp
+    ) {
+        Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+            )
+            TimeRangeSelector(
+                    selectedHours = selectedHours,
+                    onHoursChanged = onHoursChanged,
+                    showRealtime = showRealtime
+            )
+        }
+    }
+}
+
+/** 单个图表项的 Surface 包装 */
+@Composable
+private fun ChartSectionSurface(content: @Composable () -> Unit) {
     Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 1.dp
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                        text = stringResource(R.string.node_detail_load_chart),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                )
-                TimeRangeSelector(
-                        selectedHours = selectedHours,
-                        onHoursChanged = onHoursChanged,
-                        showRealtime = true
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            if (isLoading) {
-                Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center
-                ) { CircularProgressIndicator(modifier = Modifier.size(32.dp)) }
-            } else if (records.isEmpty()) {
-                Box(
-                        modifier = Modifier.fillMaxWidth().height(100.dp),
-                        contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                            text =
-                                    if (selectedHours == 0)
-                                            stringResource(R.string.node_detail_loading)
-                                    else stringResource(R.string.node_detail_no_records),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
-                val times = records.map { it.time }
-
-                // CPU 使用率图表
-                ChartCard(
-                        title = stringResource(R.string.node_detail_cpu_usage),
-                        data = records.map { it.cpu },
-                        times = times,
-                        color = MaterialTheme.colorScheme.primary,
-                        suffix = "%",
-                        chartAnimationEnabled = chartAnimationEnabled
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // RAM 使用率图表
-                ChartCard(
-                        title = stringResource(R.string.node_detail_ram),
-                        data = records.map { it.ramPercent },
-                        times = times,
-                        color = MaterialTheme.colorScheme.primary,
-                        suffix = "%",
-                        chartAnimationEnabled = chartAnimationEnabled
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 网络 IO 图表
-                NetworkChartCard(
-                        title = stringResource(R.string.node_detail_net_speed),
-                        netInData = records.map { it.netIn.toDouble() },
-                        netOutData = records.map { it.netOut.toDouble() },
-                        times = times,
-                        chartAnimationEnabled = chartAnimationEnabled
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 连接数图表
-                ConnectionChartCard(
-                        title = stringResource(R.string.node_detail_connections),
-                        tcpData = records.map { it.connections },
-                        udpData = records.map { it.connectionsUdp },
-                        times = times,
-                        suffix = "",
-                        chartAnimationEnabled = chartAnimationEnabled
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 进程数图表
-                ChartCard(
-                        title = stringResource(R.string.node_detail_process),
-                        data = records.map { it.process.toDouble() },
-                        times = times,
-                        color = MaterialTheme.colorScheme.primary,
-                        suffix = "",
-                        chartAnimationEnabled = chartAnimationEnabled
-                )
-            }
+        Box(modifier = Modifier.padding(16.dp)) {
+            content()
         }
+    }
+}
+
+// ─── 4.3 Ping 单任务图表 ───
+
+@Composable
+private fun PingTaskChart(
+        task: PingTask,
+        values: List<Double>,
+        times: List<String>,
+        chartAnimationEnabled: Boolean = true
+) {
+    Column {
+        Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                    text = task.name,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                    text = "%.0fms".format(task.latest) + " / "
+                            + "%.1f%%".format(task.loss),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+
+        val modelProducer = remember { CartesianChartModelProducer() }
+        LaunchedEffect(values) {
+            modelProducer.runTransaction { lineSeries { series(values) } }
+        }
+
+        val yAxisFormatter = remember {
+            CartesianValueFormatter { _, value, _ -> "%.0fms".format(value) }
+        }
+        val xAxisFormatter =
+                remember(times) {
+                    CartesianValueFormatter { _, value, _ ->
+                        val index = value.toInt().coerceIn(0, times.size - 1)
+                        if (index in times.indices) parseTimeLabel(times[index]) else ""
+                    }
+                }
+
+        val pingLine = rememberThemedLine(MaterialTheme.colorScheme.tertiary)
+        CartesianChartHost(
+                chart =
+                        rememberCartesianChart(
+                                rememberLineCartesianLayer(LineCartesianLayer.LineProvider.series(pingLine)),
+                                startAxis =
+                                        VerticalAxis.rememberStart(
+                                                valueFormatter = yAxisFormatter
+                                        ),
+                                bottomAxis =
+                                        HorizontalAxis.rememberBottom(
+                                                valueFormatter = xAxisFormatter
+                                        )
+                        ),
+                modelProducer = modelProducer,
+                modifier = Modifier.fillMaxWidth().height(140.dp),
+                scrollState = rememberVicoScrollState(scrollEnabled = false),
+                zoomState =
+                        rememberVicoZoomState(
+                                zoomEnabled = false,
+                                initialZoom = Zoom.Content
+                        ),
+                animationSpec = if (chartAnimationEnabled) tween(durationMillis = 500) else null,
+                animateIn = chartAnimationEnabled
+        )
     }
 }
 
@@ -895,141 +1042,6 @@ private fun NetworkChartCard(
     }
 }
 
-// ─── 4.3 Ping 延迟监控 ───
-
-@Composable
-private fun PingChartSection(
-        tasks: List<PingTask>,
-        records: List<PingRecord>,
-        isLoading: Boolean,
-        selectedHours: Int,
-        onHoursChanged: (Int) -> Unit,
-        chartAnimationEnabled: Boolean = true
-) {
-    Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 1.dp
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                        text = stringResource(R.string.node_detail_ping_chart),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                )
-                TimeRangeSelector(
-                        selectedHours = selectedHours,
-                        onHoursChanged = onHoursChanged,
-                        showRealtime = false
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            if (isLoading) {
-                Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center
-                ) { CircularProgressIndicator(modifier = Modifier.size(32.dp)) }
-            } else if (records.isEmpty()) {
-                Box(
-                        modifier = Modifier.fillMaxWidth().height(100.dp),
-                        contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                            text = stringResource(R.string.node_detail_no_records),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
-                // 按任务分组
-                tasks.forEach { task ->
-                    val taskLatest = task.latest
-//                    val taskMdev = task.p99 / task.p50
-                    val taskLoss = task.loss
-                    val taskRecords = records.filter { it.taskId == task.id }
-                    val taskValues = taskRecords.map { it.value }
-                    val taskTimes = taskRecords.map { it.time }
-                    if (taskValues.size >= 2) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = task.name,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = "%.0fms".format(taskLatest) + " / "
-                                        + "%.1f%%".format(taskLoss),
-//                                        + "%.1f".format(taskMdev),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        val modelProducer = remember { CartesianChartModelProducer() }
-                        LaunchedEffect(taskValues) {
-                            modelProducer.runTransaction { lineSeries { series(taskValues) } }
-                        }
-
-                        val yAxisFormatter = remember {
-                            CartesianValueFormatter { _, value, _ -> "%.0fms".format(value) }
-                        }
-                        val xAxisFormatter =
-                                remember(taskTimes) {
-                                    CartesianValueFormatter { _, value, _ ->
-                                        val index = value.toInt().coerceIn(0, taskTimes.size - 1)
-                                        if (index in taskTimes.indices)
-                                                parseTimeLabel(taskTimes[index])
-                                        else ""
-                                    }
-                                }
-
-                        val pingLine = rememberThemedLine(MaterialTheme.colorScheme.tertiary)
-                        CartesianChartHost(
-                                chart =
-                                        rememberCartesianChart(
-                                                rememberLineCartesianLayer(LineCartesianLayer.LineProvider.series(pingLine)),
-                                                startAxis =
-                                                        VerticalAxis.rememberStart(
-                                                                valueFormatter = yAxisFormatter
-                                                        ),
-                                                bottomAxis =
-                                                        HorizontalAxis.rememberBottom(
-                                                                valueFormatter = xAxisFormatter
-                                                        )
-                                        ),
-                                modelProducer = modelProducer,
-                                modifier = Modifier.fillMaxWidth().height(140.dp),
-                                scrollState = rememberVicoScrollState(scrollEnabled = false),
-                                zoomState =
-                                        rememberVicoZoomState(
-                                                zoomEnabled = false,
-                                                initialZoom = Zoom.Content
-                                        ),
-                                animationSpec = if (chartAnimationEnabled) tween(durationMillis = 500) else null,
-                                animateIn = chartAnimationEnabled
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-            }
-        }
-    }
-}
-
 // ─── 通用组件 ───
 
 @Composable
@@ -1182,14 +1194,25 @@ fun LoadChartSectionPreview() {
         LoadRecord(time = "2026-03-01T10:05:00Z", cpu = 45.0, ramPercent = 52.0, diskPercent = 60.0, netIn = 2048, netOut = 4096, load = 1.2, process = 105, connections = 60, connectionsUdp = 12),
         LoadRecord(time = "2026-03-01T10:10:00Z", cpu = 35.0, ramPercent = 48.0, diskPercent = 60.0, netIn = 512, netOut = 1024, load = 0.9, process = 95, connections = 45, connectionsUdp = 8)
     )
+    val times = sampleRecords.map { it.time }
     MaterialTheme {
-        LoadChartSection(
-            records = sampleRecords,
-            isLoading = false,
-            selectedHours = 1,
-            onHoursChanged = {},
-            chartAnimationEnabled = false
-        )
+        Column {
+            ChartSectionHeader(
+                title = "负载历史",
+                selectedHours = 1,
+                onHoursChanged = {},
+                showRealtime = true
+            )
+            ChartSectionSurface {
+                ChartCard(
+                    title = "CPU Usage",
+                    data = sampleRecords.map { it.cpu },
+                    times = times,
+                    color = MaterialTheme.colorScheme.primary,
+                    suffix = "%"
+                )
+            }
+        }
     }
 }
 
@@ -1205,13 +1228,13 @@ fun PingChartSectionPreview() {
         PingRecord(taskId = 1, taskName = "Google", time = "2026-03-01T10:10:00Z", value = 14.0)
     )
     MaterialTheme {
-        PingChartSection(
-            tasks = sampleTasks,
-            records = sampleRecords,
-            isLoading = false,
-            selectedHours = 1,
-            onHoursChanged = {}
-        )
+        ChartSectionSurface {
+            PingTaskChart(
+                task = sampleTasks.first(),
+                values = sampleRecords.map { it.value },
+                times = sampleRecords.map { it.time }
+            )
+        }
     }
 }
 
