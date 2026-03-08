@@ -1,6 +1,6 @@
 {
-    "versionCode": 4,
-    "versionName": "1.0.3",
+    "versionCode": 5,
+    "versionName": "1.0.4",
     "downloadUrl": "https://github.com/icylian/Yanami/releases/latest",
-    "changelog": "升级vico图表库到v3.0.3，新增设置允许关闭图表动画以优化部分设备的性能。"
+    "changelog": "升级vico图表库到v3.0.3，拆分图表、新增设置允许关闭图表动画以优化部分设备的性能。"
 }
