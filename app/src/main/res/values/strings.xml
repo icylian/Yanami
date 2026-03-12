@@ -184,4 +184,24 @@
     <string name="update_already_latest">当前已是最新版本</string>
     <string name="update_check_failed">检查更新失败</string>
     <string name="update_later">稍后再说</string>
+
+    <!-- 桌面小部件 -->
+    <string name="widget_title">节点总览</string>
+    <string name="widget_total">总数</string>
+    <string name="widget_online">在线</string>
+    <string name="widget_offline">离线</string>
+    <string name="widget_traffic_up">↑ 上传</string>
+    <string name="widget_traffic_down">↓ 下载</string>
+    <string name="widget_last_updated">更新: %s</string>
+    <string name="widget_loading">更新中…</string>
+    <string name="widget_error">获取数据失败</string>
+    <string name="widget_no_server">无活跃服务器</string>
+    <string name="widget_config_title">小部件设置</string>
+    <string name="widget_update_interval">更新间隔</string>
+    <string name="widget_interval_5m">5 分钟</string>
+    <string name="widget_interval_15m">15 分钟</string>
+    <string name="widget_interval_30m">30 分钟</string>
+    <string name="widget_interval_1h">1 小时</string>
+    <string name="widget_interval_3h">3 小时</string>
+    <string name="widget_confirm">确认</string>
 </resources>

@@ -121,6 +121,13 @@ dependencies {
     // DataStore Preferences
     implementation(libs.datastore.preferences)
 
+    // Glance AppWidget
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
+
+    // WorkManager
+    implementation(libs.work.runtime.ktx)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

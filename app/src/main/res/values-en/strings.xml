@@ -183,4 +183,24 @@
     <string name="update_already_latest">Already on latest version</string>
     <string name="update_check_failed">Failed to check for updates</string>
     <string name="update_later">Later</string>
+
+    <!-- Widget -->
+    <string name="widget_title">Node Overview</string>
+    <string name="widget_total">Total</string>
+    <string name="widget_online">Online</string>
+    <string name="widget_offline">Offline</string>
+    <string name="widget_traffic_up">↑ Upload</string>
+    <string name="widget_traffic_down">↓ Download</string>
+    <string name="widget_last_updated">Updated: %s</string>
+    <string name="widget_loading">Updating…</string>
+    <string name="widget_error">Failed to fetch data</string>
+    <string name="widget_no_server">No active server</string>
+    <string name="widget_config_title">Widget Settings</string>
+    <string name="widget_update_interval">Update Interval</string>
+    <string name="widget_interval_5m">5 minutes</string>
+    <string name="widget_interval_15m">15 minutes</string>
+    <string name="widget_interval_30m">30 minutes</string>
+    <string name="widget_interval_1h">1 hour</string>
+    <string name="widget_interval_3h">3 hours</string>
+    <string name="widget_confirm">Confirm</string>
 </resources>

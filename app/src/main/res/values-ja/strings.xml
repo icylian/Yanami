@@ -183,4 +183,24 @@
     <string name="update_already_latest">最新バージョンです</string>
     <string name="update_check_failed">確認に失敗しました</string>
     <string name="update_later">後で</string>
+
+    <!-- ウィジェット -->
+    <string name="widget_title">ノード概要</string>
+    <string name="widget_total">合計</string>
+    <string name="widget_online">オンライン</string>
+    <string name="widget_offline">オフライン</string>
+    <string name="widget_traffic_up">↑ アップロード</string>
+    <string name="widget_traffic_down">↓ ダウンロード</string>
+    <string name="widget_last_updated">更新: %s</string>
+    <string name="widget_loading">更新中…</string>
+    <string name="widget_error">データ取得失敗</string>
+    <string name="widget_no_server">アクティブなサーバーなし</string>
+    <string name="widget_config_title">ウィジェット設定</string>
+    <string name="widget_update_interval">更新間隔</string>
+    <string name="widget_interval_5m">5 分</string>
+    <string name="widget_interval_15m">15 分</string>
+    <string name="widget_interval_30m">30 分</string>
+    <string name="widget_interval_1h">1 時間</string>
+    <string name="widget_interval_3h">3 時間</string>
+    <string name="widget_confirm">確認</string>
 </resources>

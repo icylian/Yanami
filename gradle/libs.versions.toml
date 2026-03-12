@@ -33,6 +33,8 @@ vico = "3.0.3"
 securityCrypto = "1.1.0"
 biometric = "1.1.0"
 datastorePreferences = "1.2.0"
+glance = "1.1.1"
+workManager = "2.10.0"
 
 # Testing
 junit = "4.13.2"
@@ -95,6 +97,9 @@ vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", ve
 security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
+glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
+glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glance" }
+work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
