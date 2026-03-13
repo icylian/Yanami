@@ -2,6 +2,8 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="360dp"
     android:minHeight="40dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="1"
     android:updatePeriodMillis="0"
     android:configure="com.sekusarisu.yanami.ui.widget.WidgetConfigActivity"
     android:previewLayout="@layout/widget_preview"

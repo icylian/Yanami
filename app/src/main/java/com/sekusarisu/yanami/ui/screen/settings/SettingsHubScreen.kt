@@ -1,5 +1,7 @@
 package com.sekusarisu.yanami.ui.screen.settings
 
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,8 +44,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -61,6 +66,7 @@ class SettingsHubScreen : Screen {
         val viewModel = koinScreenModel<SettingsViewModel>()
         val state by viewModel.state.collectAsState()
         var showLanguageDialog by remember { mutableStateOf(false) }
+        val context = LocalContext.current
 
         val languages = listOf(
                 "system" to stringResource(R.string.settings_language_system),
@@ -115,7 +121,16 @@ class SettingsHubScreen : Screen {
                     title = stringResource(R.string.settings_biometric),
                     subtitle = stringResource(R.string.settings_biometric_desc),
                     checked = state.biometricEnabled,
-                    onCheckedChange = { viewModel.onEvent(SettingsEvent.SetBiometricEnabled(it)) }
+                    onCheckedChange = { newValue ->
+                        authenticateWithBiometric(
+                            activity = context as FragmentActivity,
+                            title = context.getString(R.string.biometric_prompt_title),
+                            subtitle = context.getString(R.string.biometric_prompt_subtitle),
+                            onSuccess = {
+                                viewModel.onEvent(SettingsEvent.SetBiometricEnabled(newValue))
+                            }
+                        )
+                    }
                 )
 
                 // ── 分组标题: UI ──
@@ -247,8 +262,48 @@ private fun SectionHeader(title: String) {
     )
 }
 
-/** 开关设置项：图标 + 标题/描述 + Switch */
-@Composable
+/**
+ * 弹出生物识别/设备密码验证弹窗，成功后回调 [onSuccess]。
+ * 若设备不支持任何认证方式，直接调用 [onSuccess]（降级放行）。
+ */
+private fun authenticateWithBiometric(
+        activity: FragmentActivity,
+        title: String,
+        subtitle: String,
+        onSuccess: () -> Unit
+) {
+    val authenticators =
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
+    val canAuth = BiometricManager.from(activity).canAuthenticate(authenticators)
+    if (canAuth != BiometricManager.BIOMETRIC_SUCCESS) {
+        // 设备不支持或未注册凭据，直接放行
+        onSuccess()
+        return
+    }
+    val prompt =
+            BiometricPrompt(
+                    activity,
+                    ContextCompat.getMainExecutor(activity),
+                    object : BiometricPrompt.AuthenticationCallback() {
+                        override fun onAuthenticationSucceeded(
+                                result: BiometricPrompt.AuthenticationResult
+                        ) {
+                            onSuccess()
+                        }
+                        // onAuthenticationError / onAuthenticationFailed → 不做任何操作，开关保持原值
+                    }
+            )
+    prompt.authenticate(
+            BiometricPrompt.PromptInfo.Builder()
+                    .setTitle(title)
+                    .setSubtitle(subtitle)
+                    .setAllowedAuthenticators(authenticators)
+                    .build()
+    )
+}
+
+/** 开关设置项：图标 + 标题/描述 + Switch */@Composable
 private fun SettingsToggleItem(
         icon: ImageVector,
         title: String,
