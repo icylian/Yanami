@@ -48,6 +48,8 @@ class WidgetUpdateWorker(
                     offlineCount = nodes.size - onlineNodes.size,
                     totalTrafficUp = onlineNodes.sumOf { it.netTotalUp },
                     totalTrafficDown = onlineNodes.sumOf { it.netTotalDown },
+                    netSpeedUp = onlineNodes.sumOf { it.netOut },
+                    netSpeedDown = onlineNodes.sumOf { it.netIn },
                     lastUpdated = System.currentTimeMillis()
                 )
             )

@@ -12,6 +12,8 @@ data class WidgetState(
     val offlineCount: Int = 0,
     val totalTrafficUp: Long = 0,
     val totalTrafficDown: Long = 0,
+    val netSpeedUp: Long = 0,
+    val netSpeedDown: Long = 0,
     val lastUpdated: Long = 0,
     val updateIntervalMinutes: Int = 30
 )

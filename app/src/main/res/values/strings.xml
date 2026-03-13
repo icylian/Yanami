@@ -192,7 +192,7 @@
     <string name="widget_offline">离线</string>
     <string name="widget_traffic_up">↑ 上传</string>
     <string name="widget_traffic_down">↓ 下载</string>
-    <string name="widget_last_updated">更新: %s</string>
+    <string name="widget_last_updated">更新时刻: %s</string>
     <string name="widget_loading">更新中…</string>
     <string name="widget_error">获取数据失败</string>
     <string name="widget_no_server">无活跃服务器</string>
