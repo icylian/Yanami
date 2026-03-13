@@ -124,6 +124,8 @@ dependencies {
     // Glance AppWidget
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
+    debugImplementation("androidx.glance:glance-preview:1.1.1")
+    debugImplementation("androidx.glance:glance-appwidget-preview:1.1.1")
 
     // WorkManager
     implementation(libs.work.runtime.ktx)
