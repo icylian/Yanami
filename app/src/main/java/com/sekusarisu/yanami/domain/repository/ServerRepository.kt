@@ -54,6 +54,13 @@ interface ServerRepository {
     suspend fun testConnectionWithApiKey(baseUrl: String, apiKey: String): String
 
     /**
+     * 使用游客模式测试与服务端的连接（无认证）
+     *
+     * @return 成功返回版本信息，失败抛出异常
+     */
+    suspend fun testConnectionAsGuest(baseUrl: String): String
+
+    /**
      * 登录到指定实例
      *
      * 成功时更新 SessionManager 并将 session_token 持久化到 DB。

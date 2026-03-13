@@ -20,6 +20,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.LinkOff
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -38,6 +41,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -85,6 +89,9 @@ class SshTerminalScreen(private val uuid: String, private val nodeName: String) 
             }
         }
 
+        var showDisconnectDialog by remember { mutableStateOf(false) }
+        var showRebootDialog by remember { mutableStateOf(false) }
+
         Scaffold(
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
                 topBar = {
@@ -115,6 +122,26 @@ class SshTerminalScreen(private val uuid: String, private val nodeName: String) 
                                     Icon(
                                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                             contentDescription = stringResource(R.string.action_back)
+                                    )
+                                }
+                            },
+                            actions = {
+                                IconButton(
+                                        onClick = soundClick { showDisconnectDialog = true },
+                                        enabled = state.isConnected
+                                ) {
+                                    Icon(
+                                            imageVector = Icons.Filled.LinkOff,
+                                            contentDescription = stringResource(R.string.ssh_disconnect_title)
+                                    )
+                                }
+                                IconButton(
+                                        onClick = soundClick { showRebootDialog = true },
+                                        enabled = state.isConnected
+                                ) {
+                                    Icon(
+                                            imageVector = Icons.Filled.RestartAlt,
+                                            contentDescription = stringResource(R.string.ssh_reboot_title)
                                     )
                                 }
                             },
@@ -202,6 +229,52 @@ class SshTerminalScreen(private val uuid: String, private val nodeName: String) 
                         modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primaryContainer)
                 )
             }
+        }
+
+        // ─── 确认对话框 ───
+
+        if (showDisconnectDialog) {
+            AlertDialog(
+                    onDismissRequest = { showDisconnectDialog = false },
+                    title = { Text(stringResource(R.string.ssh_disconnect_title)) },
+                    text = { Text(stringResource(R.string.ssh_disconnect_confirm)) },
+                    confirmButton = {
+                        TextButton(onClick = soundClick {
+                            showDisconnectDialog = false
+                            // Ctrl+D (EOT) 断开 SSH 连接
+                            viewModel.sendInput(byteArrayOf(4))
+                        }) {
+                            Text(stringResource(R.string.action_confirm))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = soundClick { showDisconnectDialog = false }) {
+                            Text(stringResource(R.string.action_cancel))
+                        }
+                    }
+            )
+        }
+
+        if (showRebootDialog) {
+            AlertDialog(
+                    onDismissRequest = { showRebootDialog = false },
+                    title = { Text(stringResource(R.string.ssh_reboot_title)) },
+                    text = { Text(stringResource(R.string.ssh_reboot_confirm)) },
+                    confirmButton = {
+                        TextButton(onClick = soundClick {
+                            showRebootDialog = false
+                            // 发送 reboot 命令重启服务器
+                            viewModel.sendInput("reboot\n".toByteArray())
+                        }) {
+                            Text(stringResource(R.string.action_confirm))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = soundClick { showRebootDialog = false }) {
+                            Text(stringResource(R.string.action_cancel))
+                        }
+                    }
+            )
         }
     }
 }

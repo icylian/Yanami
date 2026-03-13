@@ -76,6 +76,7 @@ import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
 import com.sekusarisu.yanami.data.local.preferences.UserPreferences
 import com.sekusarisu.yanami.data.local.preferences.UserPreferencesRepository
 import com.sekusarisu.yanami.R
+import com.sekusarisu.yanami.domain.model.AuthType
 import com.sekusarisu.yanami.ui.screen.soundClick
 import com.sekusarisu.yanami.domain.model.LoadRecord
 import com.sekusarisu.yanami.domain.model.Node
@@ -156,7 +157,7 @@ class NodeDetailScreen(private val uuid: String) : Screen {
                                 }
                             },
                             actions = {
-                                // SSH 终端入口：仅节点在线时可用
+                                // SSH 终端入口：仅节点在线且非游客模式时可用
                                 val isOnline = state.node?.isOnline ?: false
                                 IconButton(
                                         onClick = soundClick {
@@ -167,7 +168,7 @@ class NodeDetailScreen(private val uuid: String) : Screen {
                                                     )
                                             )
                                         },
-                                        enabled = isOnline
+                                        enabled = isOnline && state.authType != AuthType.GUEST
                                 ) {
                                     Icon(
                                             imageVector = Icons.Filled.Terminal,

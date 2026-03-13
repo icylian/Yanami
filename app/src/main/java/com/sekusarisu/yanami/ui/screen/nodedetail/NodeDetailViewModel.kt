@@ -125,7 +125,8 @@ class NodeDetailViewModel(
                                                 isLoading = false,
                                                 error = null,
                                                 isLoadRecordsLoading = selectedLoadHours > 0,
-                                                isPingRecordsLoading = true
+                                                isPingRecordsLoading = true,
+                                                authType = server.authType
                                         )
                                 }
 
@@ -426,6 +427,7 @@ class NodeDetailViewModel(
                 authType: AuthType = AuthType.PASSWORD
         ): Boolean {
                 if (!error.isSessionAuthError()) return false
+                if (authType == AuthType.GUEST) return false
                 wsJob?.cancel()
                 setState {
                         copy(

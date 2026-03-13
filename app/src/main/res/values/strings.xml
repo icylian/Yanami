@@ -58,7 +58,10 @@
     <!-- 认证模式 -->
     <string name="auth_type_password">账号密码</string>
     <string name="auth_type_api_key">API Key</string>
+    <string name="auth_type_guest">游客模式</string>
     <string name="add_server_api_key_label">API Key</string>
+    <string name="add_server_fill_guest_url">请填写服务器地址</string>
+    <string name="guest_ssh_not_supported">游客模式不支持 SSH 终端</string>
 
     <!-- 节点列表 -->
     <string name="node_list">节点列表</string>
@@ -150,6 +153,10 @@
     <string name="theme_yellow">金黄</string>
 
     <string name="action_ssh_terminal">SSH 终端</string>
+    <string name="ssh_disconnect_title">断开连接</string>
+    <string name="ssh_disconnect_confirm">确定要断开 SSH 连接吗？将发送 Ctrl+D 信号。</string>
+    <string name="ssh_reboot_title">重启服务器</string>
+    <string name="ssh_reboot_confirm">确定要重启该服务器吗？将执行 reboot 命令。</string>
 
     <!-- 错误 -->
     <string name="error_no_server_selected">未选择服务器实例</string>

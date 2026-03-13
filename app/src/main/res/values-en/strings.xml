@@ -58,7 +58,10 @@
     <!-- Auth Type -->
     <string name="auth_type_password">Password</string>
     <string name="auth_type_api_key">API Key</string>
+    <string name="auth_type_guest">Guest</string>
     <string name="add_server_api_key_label">API Key</string>
+    <string name="add_server_fill_guest_url">Please fill in the server URL</string>
+    <string name="guest_ssh_not_supported">SSH terminal is not available in guest mode</string>
 
     <!-- Node List -->
     <string name="node_list">Node List</string>
@@ -153,6 +156,10 @@
     <string name="error_no_server_selected">No server selected</string>
     <string name="error_no_session">Cannot get session_token, please re-login</string>
     <string name="action_ssh_terminal">SSH Terminal</string>
+    <string name="ssh_disconnect_title">Disconnect</string>
+    <string name="ssh_disconnect_confirm">Disconnect the SSH session? This will send a Ctrl+D signal.</string>
+    <string name="ssh_reboot_title">Reboot Server</string>
+    <string name="ssh_reboot_confirm">Are you sure you want to reboot this server? This will execute the reboot command.</string>
 
     <!-- Font Scale -->
     <string name="settings_font_scale">Font Size</string>

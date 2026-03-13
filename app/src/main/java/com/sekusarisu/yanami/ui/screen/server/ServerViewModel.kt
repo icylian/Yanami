@@ -121,6 +121,16 @@ class AddServerViewModel(
         val state = currentState
 
         when (state.authType) {
+            AuthType.GUEST -> {
+                if (state.baseUrl.isBlank()) {
+                    sendEffect(
+                            ServerContract.Effect.ShowToast(
+                                    context.getString(R.string.add_server_fill_guest_url)
+                            )
+                    )
+                    return
+                }
+            }
             AuthType.API_KEY -> {
                 if (state.baseUrl.isBlank() || state.apiKey.isBlank()) {
                     sendEffect(
@@ -152,6 +162,8 @@ class AddServerViewModel(
             try {
                 val version =
                         when (state.authType) {
+                            AuthType.GUEST ->
+                                    repository.testConnectionAsGuest(state.baseUrl)
                             AuthType.API_KEY ->
                                     repository.testConnectionWithApiKey(
                                             state.baseUrl,
@@ -201,6 +213,16 @@ class AddServerViewModel(
         val state = currentState
 
         when (state.authType) {
+            AuthType.GUEST -> {
+                if (state.name.isBlank() || state.baseUrl.isBlank()) {
+                    sendEffect(
+                            ServerContract.Effect.ShowToast(
+                                    context.getString(R.string.add_server_fill_all)
+                            )
+                    )
+                    return
+                }
+            }
             AuthType.API_KEY -> {
                 if (state.name.isBlank() || state.baseUrl.isBlank() || state.apiKey.isBlank()) {
                     sendEffect(

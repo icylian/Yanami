@@ -147,6 +147,13 @@ class SshTerminalViewModel(
                         setState { copy(isConnecting = false, error = "未选择服务器") }
                         return@launch
                     }
+
+                    // GUEST 模式不支持 SSH 终端
+                    if (server.authType == AuthType.GUEST) {
+                        setState { copy(isConnecting = false, error = "游客模式不支持 SSH 终端") }
+                        return@launch
+                    }
+
                     val sessionToken = sessionManager.getSessionToken()
                     if (sessionToken == null) {
                         setState { copy(isConnecting = false, error = "无法获取 session_token，请重新登录") }
@@ -238,6 +245,7 @@ class SshTerminalViewModel(
                                                     header("Authorization", "Bearer $sessionToken")
                                             AuthType.PASSWORD ->
                                                     header("Cookie", "session_token=$sessionToken")
+                                            AuthType.GUEST -> {}
                                         }
                                         header("Origin", origin)
                                     },
@@ -254,6 +262,7 @@ class SshTerminalViewModel(
                                                     header("Authorization", "Bearer $sessionToken")
                                             AuthType.PASSWORD ->
                                                     header("Cookie", "session_token=$sessionToken")
+                                            AuthType.GUEST -> {}
                                         }
                                         header("Origin", origin)
                                     },

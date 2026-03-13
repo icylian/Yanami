@@ -194,7 +194,7 @@ fun AddServerContent(
                                             ServerContract.Event.UpdateAuthType(AuthType.PASSWORD)
                                     )
                                 },
-                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3)
                 ) {
                     Text(stringResource(R.string.auth_type_password))
                 }
@@ -206,9 +206,21 @@ fun AddServerContent(
                                             ServerContract.Event.UpdateAuthType(AuthType.API_KEY)
                                     )
                                 },
-                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3)
                 ) {
                     Text(stringResource(R.string.auth_type_api_key))
+                }
+                SegmentedButton(
+                        selected = state.authType == AuthType.GUEST,
+                        onClick =
+                                soundClick {
+                                    onEvent(
+                                            ServerContract.Event.UpdateAuthType(AuthType.GUEST)
+                                    )
+                                },
+                        shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
+                ) {
+                    Text(stringResource(R.string.auth_type_guest))
                 }
             }
 
@@ -321,6 +333,7 @@ fun AddServerContent(
                                 AuthType.PASSWORD ->
                                         state.username.isNotBlank() && state.password.isNotBlank()
                                 AuthType.API_KEY -> state.apiKey.isNotBlank()
+                                AuthType.GUEST -> true
                             }
 
             FilledTonalButton(
@@ -388,6 +401,7 @@ fun AddServerContent(
                                 AuthType.PASSWORD ->
                                         state.username.isNotBlank() && state.password.isNotBlank()
                                 AuthType.API_KEY -> state.apiKey.isNotBlank()
+                                AuthType.GUEST -> true
                             }
 
             Button(

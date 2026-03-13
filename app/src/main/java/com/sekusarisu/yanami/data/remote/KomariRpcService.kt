@@ -126,9 +126,12 @@ class KomariRpcService(private val httpClient: HttpClient) {
         val url = baseUrl.trimEnd('/') + "/api/recent/$uuid"
         val response =
                 httpClient.get(url) {
-                    when (authType) {
-                        AuthType.API_KEY -> header("Authorization", "Bearer $sessionToken")
-                        AuthType.PASSWORD -> header("Cookie", "session_token=$sessionToken")
+                    if (sessionToken.isNotBlank()) {
+                        when (authType) {
+                            AuthType.API_KEY -> header("Authorization", "Bearer $sessionToken")
+                            AuthType.PASSWORD -> header("Cookie", "session_token=$sessionToken")
+                            AuthType.GUEST -> {}
+                        }
                     }
                 }
         val responseText = response.bodyAsText()
@@ -304,11 +307,14 @@ class KomariRpcService(private val httpClient: HttpClient) {
                             port = port,
                             path = wsPath,
                             request = {
-                                when (authType) {
-                                    AuthType.API_KEY ->
-                                            header("Authorization", "Bearer $sessionToken")
-                                    AuthType.PASSWORD ->
-                                            header("Cookie", "session_token=$sessionToken")
+                                if (sessionToken.isNotBlank()) {
+                                    when (authType) {
+                                        AuthType.API_KEY ->
+                                                header("Authorization", "Bearer $sessionToken")
+                                        AuthType.PASSWORD ->
+                                                header("Cookie", "session_token=$sessionToken")
+                                        AuthType.GUEST -> {}
+                                    }
                                 }
                                 header("Origin", origin)
                             },
@@ -320,11 +326,14 @@ class KomariRpcService(private val httpClient: HttpClient) {
                             port = port,
                             path = wsPath,
                             request = {
-                                when (authType) {
-                                    AuthType.API_KEY ->
-                                            header("Authorization", "Bearer $sessionToken")
-                                    AuthType.PASSWORD ->
-                                            header("Cookie", "session_token=$sessionToken")
+                                if (sessionToken.isNotBlank()) {
+                                    when (authType) {
+                                        AuthType.API_KEY ->
+                                                header("Authorization", "Bearer $sessionToken")
+                                        AuthType.PASSWORD ->
+                                                header("Cookie", "session_token=$sessionToken")
+                                        AuthType.GUEST -> {}
+                                    }
                                 }
                                 header("Origin", origin)
                             },
@@ -364,9 +373,12 @@ class KomariRpcService(private val httpClient: HttpClient) {
         val response =
                 httpClient.post(url) {
                     contentType(ContentType.Application.Json)
-                    when (authType) {
-                        AuthType.API_KEY -> header("Authorization", "Bearer $sessionToken")
-                        AuthType.PASSWORD -> header("Cookie", "session_token=$sessionToken")
+                    if (sessionToken.isNotBlank()) {
+                        when (authType) {
+                            AuthType.API_KEY -> header("Authorization", "Bearer $sessionToken")
+                            AuthType.PASSWORD -> header("Cookie", "session_token=$sessionToken")
+                            AuthType.GUEST -> {}
+                        }
                     }
                     setBody(requestBody.toString())
                 }

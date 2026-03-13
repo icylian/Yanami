@@ -58,7 +58,10 @@
     <!-- 認証タイプ -->
     <string name="auth_type_password">パスワード</string>
     <string name="auth_type_api_key">API Key</string>
+    <string name="auth_type_guest">ゲスト</string>
     <string name="add_server_api_key_label">API Key</string>
+    <string name="add_server_fill_guest_url">サーバーアドレスを入力してください</string>
+    <string name="guest_ssh_not_supported">ゲストモードではSSHターミナルは使用できません</string>
 
     <!-- ノードリスト -->
     <string name="node_list">ノードリスト</string>
@@ -153,6 +156,10 @@
     <string name="error_no_server_selected">サーバーが選択されていません</string>
     <string name="error_no_session">session_tokenを取得できません。再ログインしてください</string>
     <string name="action_ssh_terminal">SSHターミナル</string>
+    <string name="ssh_disconnect_title">切断</string>
+    <string name="ssh_disconnect_confirm">SSH接続を切断しますか？Ctrl+D信号を送信します。</string>
+    <string name="ssh_reboot_title">サーバーを再起動</string>
+    <string name="ssh_reboot_confirm">このサーバーを再起動しますか？rebootコマンドを実行します。</string>
 
     <!-- フォントサイズ -->
     <string name="settings_font_scale">フォントサイズ</string>

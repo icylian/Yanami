@@ -158,6 +158,7 @@ class NodeListViewModel(
             authType: AuthType = AuthType.PASSWORD
     ): Boolean {
         if (!error.isSessionAuthError()) return false
+        if (authType == AuthType.GUEST) return false
         wsJob?.cancel()
         setState { copy(isLoading = false, isRefreshing = false, error = null) }
         sendEffect(

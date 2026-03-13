@@ -101,7 +101,20 @@ class ServerRepositoryImpl(
         return version
     }
 
+    override suspend fun testConnectionAsGuest(baseUrl: String): String {
+        val version = rpcService.getVersion(baseUrl, "", AuthType.GUEST)
+        Log.d(TAG, "Test connection as guest ok, version=$version")
+        return version
+    }
+
     override suspend fun login(instance: ServerInstance, twoFaCode: String?): Boolean {
+        // GUEST 模式：直接设置空 session，无需登录
+        if (instance.authType == AuthType.GUEST) {
+            sessionManager.setSession(instance.id, instance.baseUrl, "", AuthType.GUEST)
+            Log.d(TAG, "Guest session set for server ${instance.name}")
+            return true
+        }
+
         // API_KEY 模式：直接设置 session，无需登录
         if (instance.authType == AuthType.API_KEY) {
             val apiKey = instance.apiKey
@@ -136,6 +149,12 @@ class ServerRepositoryImpl(
     }
 
     override suspend fun ensureSessionToken(instance: ServerInstance): String {
+        // GUEST 模式：直接返回空 token
+        if (instance.authType == AuthType.GUEST) {
+            sessionManager.setSession(instance.id, instance.baseUrl, "", AuthType.GUEST)
+            return ""
+        }
+
         // API_KEY 模式：直接使用 API Key，无需恢复/验证 session
         if (instance.authType == AuthType.API_KEY) {
             val apiKey = instance.apiKey
@@ -153,6 +172,13 @@ class ServerRepositoryImpl(
     }
 
     override suspend fun restoreSession(instance: ServerInstance): Boolean {
+        // GUEST 模式：直接设置空 session
+        if (instance.authType == AuthType.GUEST) {
+            sessionManager.setSession(instance.id, instance.baseUrl, "", AuthType.GUEST)
+            Log.d(TAG, "Guest session restored for server ${instance.name}")
+            return true
+        }
+
         // API_KEY 模式：直接从存储的 apiKey 设置 session
         if (instance.authType == AuthType.API_KEY) {
             val apiKey = instance.apiKey

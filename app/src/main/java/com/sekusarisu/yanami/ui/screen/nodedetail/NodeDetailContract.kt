@@ -1,5 +1,6 @@
 package com.sekusarisu.yanami.ui.screen.nodedetail
 
+import com.sekusarisu.yanami.domain.model.AuthType
 import com.sekusarisu.yanami.domain.model.LoadRecord
 import com.sekusarisu.yanami.domain.model.Node
 import com.sekusarisu.yanami.domain.model.PingRecord
@@ -22,7 +23,8 @@ object NodeDetailContract {
             val selectedPingHours: Int = 1,
             val isLoadRecordsLoading: Boolean = false,
             val isPingRecordsLoading: Boolean = false,
-            val error: String? = null
+            val error: String? = null,
+            val authType: AuthType = AuthType.PASSWORD
     ) : UiState
 
     sealed interface Event : UiEvent {

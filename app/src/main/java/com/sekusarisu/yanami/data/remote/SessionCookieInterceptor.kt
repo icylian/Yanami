@@ -24,7 +24,7 @@ class SessionCookieInterceptor(private val sessionManager: SessionManager) : Int
         val sessionToken = sessionManager.getSessionToken()
         val authType = sessionManager.getAuthType() ?: AuthType.PASSWORD
 
-        return if (sessionToken != null) {
+        return if (!sessionToken.isNullOrBlank()) {
             val newRequest =
                     when (authType) {
                         AuthType.API_KEY -> {
@@ -53,6 +53,9 @@ class SessionCookieInterceptor(private val sessionManager: SessionManager) : Int
                                     .newBuilder()
                                     .header("Cookie", fullCookie)
                                     .build()
+                        }
+                        AuthType.GUEST -> {
+                            originalRequest
                         }
                     }
             chain.proceed(newRequest)
