@@ -226,6 +226,10 @@ class SshTerminalScreen(private val uuid: String, private val nodeName: String) 
                         onToggleCtrl = { viewModel.onEvent(SshTerminalContract.Event.ToggleCtrl) },
                         onToggleAlt = { viewModel.onEvent(SshTerminalContract.Event.ToggleAlt) },
                         onToggleFn = { viewModel.onEvent(SshTerminalContract.Event.ToggleFn) },
+                        isCursorAppMode = {
+                            viewModel.terminalBridge.session.emulator
+                                ?.isCursorKeysApplicationMode ?: false
+                        },
                         modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primaryContainer)
                 )
             }
@@ -325,6 +329,10 @@ private fun TerminalContent(viewModel: SshTerminalViewModel, fontSize: Int) {
                         onFontSizeChange = { delta ->
                             viewModel.onEvent(SshTerminalContract.Event.FontSizeChanged(delta))
                         }
+                        isCursorAppMode = {
+                            viewModel.terminalBridge.session.emulator
+                                ?.isCursorKeysApplicationMode ?: false
+                        }
                         requestFocus()
                     }
                 },
@@ -416,6 +424,18 @@ private fun buildDisplayOnlyClient(): TerminalViewClient =
 
 // ─── 特殊按键工具栏 ───
 
+/** 在 Application Cursor Keys 模式 (DECCKM) 下，将方向键 ESC [ A/B/C/D 翻译为 ESC O A/B/C/D */
+private fun resolveCursorKeyBytes(bytes: ByteArray, cursorApp: Boolean): ByteArray {
+    if (!cursorApp || bytes.size != 3) return bytes
+    if (bytes[0] == 27.toByte() && bytes[1] == 91.toByte()) {
+        when (bytes[2]) {
+            65.toByte(), 66.toByte(), 67.toByte(), 68.toByte() ->
+                return byteArrayOf(27, 79, bytes[2])
+        }
+    }
+    return bytes
+}
+
 private data class ToolbarKey(val label: String, val bytes: ByteArray)
 
 /** 普通模式第一行：ESC / | - HOME ↑ END PGUP */
@@ -470,6 +490,7 @@ private fun SpecialKeysToolbar(
         onToggleCtrl: () -> Unit,
         onToggleAlt: () -> Unit,
         onToggleFn: () -> Unit,
+        isCursorAppMode: () -> Boolean = { false },
         modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -479,7 +500,7 @@ private fun SpecialKeysToolbar(
     @Composable
     fun KeyBtn(key: ToolbarKey, modifier: Modifier) {
         TextButton(
-                onClick = soundClick { onKey(key.bytes) },
+                onClick = soundClick { onKey(resolveCursorKeyBytes(key.bytes, isCursorAppMode())) },
                 modifier = modifier.height(BTN_HEIGHT),
                 contentPadding = BTN_PADDING
         ) {

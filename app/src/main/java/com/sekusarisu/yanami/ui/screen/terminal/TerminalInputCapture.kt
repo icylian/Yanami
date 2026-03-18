@@ -32,6 +32,9 @@ constructor(context: Context, attrs: AttributeSet? = null) : View(context, attrs
     /** 音量键字号调整回调：delta = +1 增大 / -1 减小 */
     var onFontSizeChange: (delta: Int) -> Unit = {}
 
+    /** 查询 TerminalEmulator 当前是否处于 Application Cursor Keys 模式 (DECCKM) */
+    var isCursorAppMode: () -> Boolean = { false }
+
     init {
         isFocusable = true
         isFocusableInTouchMode = true
@@ -60,7 +63,7 @@ constructor(context: Context, attrs: AttributeSet? = null) : View(context, attrs
             KeyEvent.KEYCODE_VOLUME_UP -> { onFontSizeChange(+1); return true }
             KeyEvent.KEYCODE_VOLUME_DOWN -> { onFontSizeChange(-1); return true }
         }
-        val bytes = keyCodeToBytes(keyCode, event) ?: return super.onKeyDown(keyCode, event)
+        val bytes = keyCodeToBytes(keyCode, event, isCursorAppMode()) ?: return super.onKeyDown(keyCode, event)
         onInput(bytes)
         return true
     }
@@ -69,7 +72,7 @@ constructor(context: Context, attrs: AttributeSet? = null) : View(context, attrs
         // 仅消费 onKeyDown 也会消费的按键，保持一致性
         return when (keyCode) {
             KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN -> true
-            else -> keyCodeToBytes(keyCode, event) != null
+            else -> keyCodeToBytes(keyCode, event, isCursorAppMode()) != null
         }
     }
 
@@ -105,8 +108,11 @@ constructor(context: Context, attrs: AttributeSet? = null) : View(context, attrs
         /**
          * 将 Android KeyCode 转换为对应的 ANSI/VT100 终端字节序列。
          * 返回 null 表示此 keyCode 不需要特殊处理（由 InputConnection 或父类处理）。
+         *
+         * @param cursorApp 当 TerminalEmulator 处于 Application Cursor Keys 模式 (DECCKM) 时为 true，
+         *                  方向键将发送 ESC O A/B/C/D 而非 ESC [ A/B/C/D。
          */
-        fun keyCodeToBytes(keyCode: Int, event: KeyEvent): ByteArray? {
+        fun keyCodeToBytes(keyCode: Int, event: KeyEvent, cursorApp: Boolean = false): ByteArray? {
             return when (keyCode) {
                 KeyEvent.KEYCODE_ENTER,
                 KeyEvent.KEYCODE_NUMPAD_ENTER -> byteArrayOf(13) // CR
@@ -114,10 +120,11 @@ constructor(context: Context, attrs: AttributeSet? = null) : View(context, attrs
                 KeyEvent.KEYCODE_FORWARD_DEL -> byteArrayOf(27, 91, 51, 126) // ESC [ 3 ~
                 KeyEvent.KEYCODE_ESCAPE -> byteArrayOf(27)
                 KeyEvent.KEYCODE_TAB -> byteArrayOf(9) // HT
-                KeyEvent.KEYCODE_DPAD_UP -> byteArrayOf(27, 91, 65) // ESC [ A
-                KeyEvent.KEYCODE_DPAD_DOWN -> byteArrayOf(27, 91, 66) // ESC [ B
-                KeyEvent.KEYCODE_DPAD_RIGHT -> byteArrayOf(27, 91, 67) // ESC [ C
-                KeyEvent.KEYCODE_DPAD_LEFT -> byteArrayOf(27, 91, 68) // ESC [ D
+                // 方向键：Application Cursor Keys 模式下 ESC O x，Normal 模式下 ESC [ x
+                KeyEvent.KEYCODE_DPAD_UP    -> if (cursorApp) byteArrayOf(27, 79, 65) else byteArrayOf(27, 91, 65)
+                KeyEvent.KEYCODE_DPAD_DOWN  -> if (cursorApp) byteArrayOf(27, 79, 66) else byteArrayOf(27, 91, 66)
+                KeyEvent.KEYCODE_DPAD_RIGHT -> if (cursorApp) byteArrayOf(27, 79, 67) else byteArrayOf(27, 91, 67)
+                KeyEvent.KEYCODE_DPAD_LEFT  -> if (cursorApp) byteArrayOf(27, 79, 68) else byteArrayOf(27, 91, 68)
                 KeyEvent.KEYCODE_MOVE_HOME -> byteArrayOf(27, 91, 72) // ESC [ H
                 KeyEvent.KEYCODE_MOVE_END -> byteArrayOf(27, 91, 70) // ESC [ F
                 KeyEvent.KEYCODE_PAGE_UP -> byteArrayOf(27, 91, 53, 126) // ESC [ 5 ~
