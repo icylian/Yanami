@@ -1,6 +1,6 @@
 {
-    "versionCode": 7,
-    "versionName": "1.0.6",
+    "versionCode": 8,
+    "versionName": "1.0.7",
     "downloadUrl": "https://github.com/icylian/Yanami/releases/latest",
-    "changelog": "新增游客模式、新增桌面小部件、添加触摸震动反馈、修复生物识别锁的开关逻辑。"
+    "changelog": "新增代码片段功能、优化平板布局。"
 }
