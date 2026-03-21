@@ -35,6 +35,9 @@ constructor(context: Context, attrs: AttributeSet? = null) : View(context, attrs
     /** 查询 TerminalEmulator 当前是否处于 Application Cursor Keys 模式 (DECCKM) */
     var isCursorAppMode: () -> Boolean = { false }
 
+    /** 触摸事件回调：用于将触屏映射为终端鼠标事件（由 Screen 层处理协议编码与发送） */
+    var onTouchInput: (MotionEvent) -> Unit = {}
+
     init {
         isFocusable = true
         isFocusableInTouchMode = true
@@ -49,6 +52,7 @@ constructor(context: Context, attrs: AttributeSet? = null) : View(context, attrs
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        onTouchInput(event)
         if (event.action == MotionEvent.ACTION_UP) {
             requestFocus()
             val imm = context.getSystemService(InputMethodManager::class.java)

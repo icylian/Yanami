@@ -121,6 +121,13 @@ class SshTerminalViewModel(
         }
     }
 
+    /** 直接将原始字节发送到 WebSocket（不应用 CTRL/ALT 一次性修饰） */
+    fun sendRawInput(bytes: ByteArray) {
+        screenModelScope.launch {
+            sendQueue.send(WsOutMessage.Binary(bytes))
+        }
+    }
+
     /** 将终端尺寸变化发送到 WebSocket（由 Screen 层 Modifier.onSizeChanged 触发）
      *
      * 若 WebSocket 尚未建连，仅缓存最新尺寸；建连后立即作为初始 resize 发送。

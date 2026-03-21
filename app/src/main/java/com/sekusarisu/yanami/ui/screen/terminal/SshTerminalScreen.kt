@@ -1,6 +1,7 @@
 package com.sekusarisu.yanami.ui.screen.terminal
 
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
@@ -56,6 +57,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.sekusarisu.yanami.R
 import com.sekusarisu.yanami.ui.screen.soundClick
+import com.termux.terminal.TerminalEmulator
 import com.termux.terminal.TerminalSession
 import com.termux.view.TerminalView
 import com.termux.view.TerminalViewClient
@@ -326,6 +328,13 @@ private fun TerminalContent(viewModel: SshTerminalViewModel, fontSize: Int) {
                 factory = { ctx ->
                     TerminalInputCapture(ctx).apply {
                         onInput = viewModel::sendInput
+                        onTouchInput = { event ->
+                            handleTouchAsTerminalMouse(
+                                    event = event,
+                                    terminalView = terminalViewRef.value,
+                                    sendRawInput = viewModel::sendRawInput
+                            )
+                        }
                         onFontSizeChange = { delta ->
                             viewModel.onEvent(SshTerminalContract.Event.FontSizeChanged(delta))
                         }
@@ -355,6 +364,80 @@ private fun readAndSendEmulatorSize(viewModel: SshTerminalViewModel) {
     } catch (_: Exception) { return }
     if (cols > 0 && rows > 0) viewModel.sendResize(cols, rows)
 }
+
+private const val DECSET_BIT_MOUSE_TRACKING_BUTTON_EVENT = 1 shl 7
+private const val DECSET_BIT_MOUSE_PROTOCOL_SGR = 1 shl 9
+
+private fun handleTouchAsTerminalMouse(
+        event: MotionEvent,
+        terminalView: TerminalView?,
+        sendRawInput: (ByteArray) -> Unit
+) {
+    val view = terminalView ?: return
+    val session = view.currentSession ?: return
+    val emulator = session.emulator ?: return
+    if (!emulator.isMouseTrackingActive()) return
+
+    val action = event.actionMasked
+    val trackingMove = isDecsetBitSet(emulator, DECSET_BIT_MOUSE_TRACKING_BUTTON_EVENT)
+    val buttonAndPressed = when (action) {
+        MotionEvent.ACTION_DOWN -> TerminalEmulator.MOUSE_LEFT_BUTTON to true
+        MotionEvent.ACTION_UP -> TerminalEmulator.MOUSE_LEFT_BUTTON to false
+        MotionEvent.ACTION_CANCEL -> TerminalEmulator.MOUSE_LEFT_BUTTON to false
+        MotionEvent.ACTION_MOVE -> {
+            if (!trackingMove) return
+            TerminalEmulator.MOUSE_LEFT_BUTTON_MOVED to true
+        }
+        else -> return
+    }
+
+    val point = view.getColumnAndRow(event, false)
+    if (point.size < 2) return
+    val column = (point[0] + 1).coerceIn(1, emulator.mColumns)
+    val row = (point[1] + 1).coerceIn(1, emulator.mRows)
+    val sgr = isDecsetBitSet(emulator, DECSET_BIT_MOUSE_PROTOCOL_SGR)
+    val encoded =
+            encodeMouseEventBytes(
+                    mouseButton = buttonAndPressed.first,
+                    column = column,
+                    row = row,
+                    pressed = buttonAndPressed.second,
+                    useSgrProtocol = sgr
+            ) ?: return
+    sendRawInput(encoded)
+}
+
+private fun encodeMouseEventBytes(
+        mouseButton: Int,
+        column: Int,
+        row: Int,
+        pressed: Boolean,
+        useSgrProtocol: Boolean
+): ByteArray? {
+    if (useSgrProtocol) {
+        return "\u001b[<$mouseButton;$column;$row${if (pressed) 'M' else 'm'}".toByteArray()
+    }
+
+    val buttonCode = if (pressed) mouseButton else 3
+    if (column > 255 - 32 || row > 255 - 32) return null
+    return byteArrayOf(
+            27,
+            '['.code.toByte(),
+            'M'.code.toByte(),
+            (32 + buttonCode).toByte(),
+            (32 + column).toByte(),
+            (32 + row).toByte()
+    )
+}
+
+private fun isDecsetBitSet(emulator: TerminalEmulator, bit: Int): Boolean =
+        try {
+            val field = emulator.javaClass.getDeclaredField("mCurrentDecSetFlags")
+            field.isAccessible = true
+            (field.getInt(emulator) and bit) != 0
+        } catch (_: Exception) {
+            false
+        }
 
 /**
  * 构建一个纯展示用的 [TerminalViewClient]（不处理任何输入事件）。
