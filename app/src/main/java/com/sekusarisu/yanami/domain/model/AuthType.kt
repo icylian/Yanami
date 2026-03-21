@@ -1,6 +1,9 @@
 package com.sekusarisu.yanami.domain.model
 
+import kotlinx.serialization.Serializable
+
 /** 认证方式 */
+@Serializable
 enum class AuthType {
     /** 账号密码认证 */
     PASSWORD,

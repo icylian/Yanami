@@ -1,6 +1,7 @@
 package com.sekusarisu.yanami.di
 
 import androidx.room.Room
+import com.sekusarisu.yanami.data.backup.ConfigBackupManager
 import com.sekusarisu.yanami.data.local.MIGRATION_2_3
 import com.sekusarisu.yanami.data.local.YanamiDatabase
 import com.sekusarisu.yanami.data.local.crypto.CryptoManager
@@ -72,6 +73,7 @@ val appModule = module {
 
     // ─── Preferences ───
     single { UserPreferencesRepository(androidContext()) }
+    single { ConfigBackupManager(androidContext(), get(), get()) }
 
     // ─── Remote Service ───
     single { KomariAuthService(get()) }
@@ -97,7 +99,7 @@ val appModule = module {
         ServerReLoginViewModel(serverId, forceTwoFa, get(), androidContext())
     }
     factory { NodeListViewModel(get(), get(), androidContext()) }
-    factory { SettingsViewModel(get()) }
+    factory { SettingsViewModel(get(), get(), androidContext()) }
     factory { AboutViewModel(get(), androidContext()) }
     factory { (uuid: String) -> NodeDetailViewModel(uuid, get(), get(), get(), androidContext()) }
     factory { (uuid: String) -> SshTerminalViewModel(uuid, get(), get(), get(), get()) }

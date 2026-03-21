@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 /** 服务端实例仓库接口 */
 interface ServerRepository {
 
+    /** 获取所有实例（一次性） */
+    suspend fun getAll(): List<ServerInstance>
+
     /** 获取所有实例（Flow，实时更新） */
     fun getAllFlow(): Flow<List<ServerInstance>>
 

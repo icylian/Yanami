@@ -1,5 +1,8 @@
 package com.sekusarisu.yanami.ui.screen.settings
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.clickable
@@ -17,12 +20,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Animation
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.RocketLaunch
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,6 +40,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -70,6 +76,14 @@ class SettingsHubScreen : Screen {
         var showLanguageDialog by remember { mutableStateOf(false) }
         val context = LocalContext.current
         val adaptiveInfo = rememberAdaptiveLayoutInfo()
+        val exportLauncher =
+                rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) {
+                    uri -> if (uri != null) viewModel.exportConfig(uri)
+                }
+        val importLauncher =
+                rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+                    if (uri != null) viewModel.importConfig(uri)
+                }
 
         val languages = listOf(
                 "system" to stringResource(R.string.settings_language_system),
@@ -78,6 +92,16 @@ class SettingsHubScreen : Screen {
                 "ja" to "日本語"
         )
         val currentLanguageLabel = languages.firstOrNull { it.first == state.language }?.second ?: ""
+
+        LaunchedEffect(Unit) {
+            viewModel.effect.collect { effect ->
+                when (effect) {
+                    is SettingsEffect.ShowToast -> {
+                        Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
 
         Scaffold(
                 modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -165,6 +189,27 @@ class SettingsHubScreen : Screen {
                     title = stringResource(R.string.settings_language),
                     subtitle = currentLanguageLabel,
                     onClick = soundClick { showLanguageDialog = true }
+                )
+
+                // ── 分组标题: 备份 ──
+                SectionHeader(title = stringResource(R.string.settings_backup))
+
+                SettingsNavItem(
+                        icon = Icons.Default.Upload,
+                        title = stringResource(R.string.settings_export_config),
+                        subtitle = stringResource(R.string.settings_export_config_desc),
+                        onClick = soundClick {
+                            exportLauncher.launch("yanami-config-backup.json")
+                        }
+                )
+
+                SettingsNavItem(
+                        icon = Icons.Default.Download,
+                        title = stringResource(R.string.settings_import_config),
+                        subtitle = stringResource(R.string.settings_import_config_desc),
+                        onClick = soundClick {
+                            importLauncher.launch(arrayOf("application/json", "text/plain"))
+                        }
                 )
 
                 // ── 分组标题: 其他 ──

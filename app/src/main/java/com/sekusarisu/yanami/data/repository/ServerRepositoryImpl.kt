@@ -38,6 +38,10 @@ class ServerRepositoryImpl(
         private const val TAG = "ServerRepo"
     }
 
+    override suspend fun getAll(): List<ServerInstance> {
+        return dao.getAll().map { it.toDomain() }
+    }
+
     override fun getAllFlow(): Flow<List<ServerInstance>> {
         return dao.getAllFlow().map { entities -> entities.map { it.toDomain() } }
     }
