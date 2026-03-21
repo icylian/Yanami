@@ -9,8 +9,12 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.sekusarisu.yanami.domain.model.TerminalSnippet
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
 /** DataStore 扩展属性 */
 private val Context.dataStore: DataStore<Preferences> by
         preferencesDataStore(name = "user_preferences")
@@ -34,8 +38,11 @@ class UserPreferencesRepository(private val context: Context) {
         private val AUTO_ENTER_NODELIST_KEY = booleanPreferencesKey("auto_enter_nodelist")
         private val CHART_ANIMATION_KEY = booleanPreferencesKey("chart_animation")
         private val BIOMETRIC_ENABLED_KEY = booleanPreferencesKey("biometric_enabled")
+        private val TERMINAL_SNIPPETS_KEY = stringPreferencesKey("terminal_snippets")
         const val DEFAULT_TERMINAL_FONT_SIZE = 20
     }
+
+    private val json = Json { ignoreUnknownKeys = true }
 
     /** 偏好数据流 */
     val preferencesFlow: Flow<UserPreferences> =
@@ -77,6 +84,19 @@ class UserPreferencesRepository(private val context: Context) {
         context.dataStore.edit { it[TERMINAL_FONT_SIZE_KEY] = size }
     }
 
+    /** 终端 snippets Flow */
+    val terminalSnippets: Flow<List<TerminalSnippet>> =
+            context.dataStore.data.map { prefs ->
+                prefs[TERMINAL_SNIPPETS_KEY]?.let(::decodeSnippets).orEmpty()
+            }
+
+    /** 保存终端 snippets */
+    suspend fun setTerminalSnippets(snippets: List<TerminalSnippet>) {
+        context.dataStore.edit { prefs ->
+            prefs[TERMINAL_SNIPPETS_KEY] = json.encodeToString(snippets)
+        }
+    }
+
     /** 设置字体缩放比例 */
     suspend fun setFontScale(scale: Float) {
         context.dataStore.edit { it[FONT_SCALE_KEY] = scale }
@@ -96,6 +116,9 @@ class UserPreferencesRepository(private val context: Context) {
     suspend fun setBiometricEnabled(enabled: Boolean) {
         context.dataStore.edit { it[BIOMETRIC_ENABLED_KEY] = enabled }
     }
+
+    private fun decodeSnippets(raw: String): List<TerminalSnippet> =
+            runCatching { json.decodeFromString<List<TerminalSnippet>>(raw) }.getOrDefault(emptyList())
 }
 
 /** 用户偏好数据类 */

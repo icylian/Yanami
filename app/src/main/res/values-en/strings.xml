@@ -160,6 +160,26 @@
     <string name="ssh_disconnect_confirm">Disconnect the SSH session? This will send a Ctrl+D signal.</string>
     <string name="ssh_reboot_title">Reboot Server</string>
     <string name="ssh_reboot_confirm">Are you sure you want to reboot this server? This will execute the reboot command.</string>
+    <string name="terminal_snippets_title">Snippets</string>
+    <string name="terminal_snippets_desc">Store multi-line commands and send them to the current SSH session with one tap.</string>
+    <string name="terminal_snippets_saved_commands">Saved Commands</string>
+    <string name="terminal_snippets_empty">No snippets yet. Add a frequently used SSH command first.</string>
+    <string name="terminal_snippets_close">Close snippets</string>
+    <string name="terminal_snippet_create">New Snippet</string>
+    <string name="terminal_snippet_edit">Edit Snippet</string>
+    <string name="terminal_snippet_name_label">Name</string>
+    <string name="terminal_snippet_content_label">Command Content</string>
+    <string name="terminal_snippet_append_enter">Append Enter after sending</string>
+    <string name="terminal_snippet_append_enter_desc">Line breaks are normalized to LF when saved. They are injected into the terminal using carriage-return semantics, and no extra Enter is added if the content already ends with a newline.</string>
+    <string name="terminal_snippet_save">Save Snippet</string>
+    <string name="terminal_snippet_update">Update Snippet</string>
+    <string name="terminal_snippet_send">Send to Terminal</string>
+    <string name="terminal_snippet_disconnected">Disconnected</string>
+    <string name="terminal_snippet_auto_enter">Auto Enter</string>
+    <string name="terminal_snippet_name_empty">Snippet name cannot be empty</string>
+    <string name="terminal_snippet_content_empty">Snippet content cannot be empty</string>
+    <string name="terminal_snippet_delete_title">Delete Snippet</string>
+    <string name="terminal_snippet_delete_confirm">Delete \"%s\"?</string>
 
     <!-- Font Scale -->
     <string name="settings_font_scale">Font Size</string>

@@ -1,5 +1,6 @@
 package com.sekusarisu.yanami.ui.screen.terminal
 
+import com.sekusarisu.yanami.domain.model.TerminalSnippet
 import com.sekusarisu.yanami.mvi.UiEffect
 import com.sekusarisu.yanami.mvi.UiEvent
 import com.sekusarisu.yanami.mvi.UiState
@@ -14,7 +15,9 @@ object SshTerminalContract {
             val fontSize: Int = 20,
             val ctrlActive: Boolean = false,
             val altActive: Boolean = false,
-            val fnMode: Boolean = false
+            val fnMode: Boolean = false,
+            val isSnippetsPanelOpen: Boolean = false,
+            val snippets: List<TerminalSnippet> = emptyList()
     ) : UiState
 
     sealed interface Event : UiEvent {
@@ -24,6 +27,8 @@ object SshTerminalContract {
         data object ToggleCtrl : Event
         data object ToggleAlt : Event
         data object ToggleFn : Event
+        data object ToggleSnippetsPanel : Event
+        data class SetSnippetsPanelOpen(val open: Boolean) : Event
     }
 
     sealed interface Effect : UiEffect {

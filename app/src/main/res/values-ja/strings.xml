@@ -160,6 +160,26 @@
     <string name="ssh_disconnect_confirm">SSH接続を切断しますか？Ctrl+D信号を送信します。</string>
     <string name="ssh_reboot_title">サーバーを再起動</string>
     <string name="ssh_reboot_confirm">このサーバーを再起動しますか？rebootコマンドを実行します。</string>
+    <string name="terminal_snippets_title">Snippets</string>
+    <string name="terminal_snippets_desc">複数行コマンドを保存し、現在のSSHセッションへワンタップで送信できます。</string>
+    <string name="terminal_snippets_saved_commands">保存済みコマンド</string>
+    <string name="terminal_snippets_empty">まだ snippets がありません。よく使う SSH 運用コマンドを追加してください。</string>
+    <string name="terminal_snippets_close">snippets を閉じる</string>
+    <string name="terminal_snippet_create">Snippetを追加</string>
+    <string name="terminal_snippet_edit">Snippetを編集</string>
+    <string name="terminal_snippet_name_label">名前</string>
+    <string name="terminal_snippet_content_label">コマンド内容</string>
+    <string name="terminal_snippet_append_enter">送信後にEnterを追加</string>
+    <string name="terminal_snippet_append_enter_desc">保存時に改行はLFへ正規化され、送信時はキャリッジリターンとして各行を注入します。末尾がすでに改行で終わっている場合は追加のEnterを送りません。</string>
+    <string name="terminal_snippet_save">Snippetを保存</string>
+    <string name="terminal_snippet_update">Snippetを更新</string>
+    <string name="terminal_snippet_send">ターミナルに送信</string>
+    <string name="terminal_snippet_disconnected">未接続</string>
+    <string name="terminal_snippet_auto_enter">自動Enter</string>
+    <string name="terminal_snippet_name_empty">Snippet名は必須です</string>
+    <string name="terminal_snippet_content_empty">Snippet内容は必須です</string>
+    <string name="terminal_snippet_delete_title">Snippetを削除</string>
+    <string name="terminal_snippet_delete_confirm">「%s」を削除しますか？</string>
 
     <!-- フォントサイズ -->
     <string name="settings_font_scale">フォントサイズ</string>

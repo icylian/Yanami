@@ -4,6 +4,7 @@ import android.util.Log
 import cafe.adriel.voyager.core.model.screenModelScope
 import com.sekusarisu.yanami.data.local.preferences.UserPreferencesRepository
 import com.sekusarisu.yanami.data.remote.SessionManager
+import com.sekusarisu.yanami.domain.model.TerminalSnippet
 import com.sekusarisu.yanami.domain.model.AuthType
 import com.sekusarisu.yanami.domain.repository.ServerRepository
 import com.sekusarisu.yanami.mvi.MviViewModel
@@ -24,6 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.time.Instant
+import java.util.UUID
 
 /**
  * SSH 终端 ViewModel
@@ -75,6 +77,11 @@ class SshTerminalViewModel(
                 setState { copy(fontSize = size) }
             }
         }
+        screenModelScope.launch {
+            userPreferencesRepository.terminalSnippets.collect { snippets ->
+                setState { copy(snippets = snippets) }
+            }
+        }
         connect()
     }
 
@@ -94,6 +101,10 @@ class SshTerminalViewModel(
             is SshTerminalContract.Event.ToggleAlt ->
                     setState { copy(altActive = !altActive, ctrlActive = false) }
             is SshTerminalContract.Event.ToggleFn -> setState { copy(fnMode = !fnMode) }
+            is SshTerminalContract.Event.ToggleSnippetsPanel ->
+                    setState { copy(isSnippetsPanelOpen = !isSnippetsPanelOpen) }
+            is SshTerminalContract.Event.SetSnippetsPanelOpen ->
+                    setState { copy(isSnippetsPanelOpen = event.open) }
             is SshTerminalContract.Event.Resize -> {
                 // 由 sendResize() 直接处理
             }
@@ -126,6 +137,50 @@ class SshTerminalViewModel(
         screenModelScope.launch {
             sendQueue.send(WsOutMessage.Binary(bytes))
         }
+    }
+
+    fun sendSnippet(snippet: TerminalSnippet) {
+        val normalizedContent = normalizeSnippetContent(snippet.content)
+        if (normalizedContent.isEmpty()) return
+        val payload =
+                buildString {
+                    append(normalizedContent.replace("\n", "\r"))
+                    if (snippet.appendEnter && !normalizedContent.endsWith("\n")) {
+                        append('\r')
+                    }
+                }
+        sendRawInput(payload.toByteArray(Charsets.UTF_8))
+    }
+
+    fun saveSnippet(
+            snippetId: String?,
+            title: String,
+            content: String,
+            appendEnter: Boolean
+    ): Boolean {
+        val normalizedTitle = title.trim()
+        val normalizedContent = normalizeSnippetContent(content)
+        if (normalizedTitle.isEmpty()) return false
+        if (normalizedContent.isBlank()) return false
+
+        val snippet =
+                TerminalSnippet(
+                        id = snippetId ?: UUID.randomUUID().toString(),
+                        title = normalizedTitle,
+                        content = normalizedContent,
+                        appendEnter = appendEnter
+                )
+        val updatedSnippets =
+                currentState.snippets
+                        .filterNot { it.id == snippet.id }
+                        .plus(snippet)
+                        .sortedBy { it.title.lowercase() }
+        persistSnippets(updatedSnippets)
+        return true
+    }
+
+    fun deleteSnippet(snippetId: String) {
+        persistSnippets(currentState.snippets.filterNot { it.id == snippetId })
     }
 
     /** 将终端尺寸变化发送到 WebSocket（由 Screen 层 Modifier.onSizeChanged 触发）
@@ -306,6 +361,14 @@ class SshTerminalViewModel(
         terminalBridge.session.finishIfRunning()
         sendQueue.close()
     }
+
+    private fun persistSnippets(snippets: List<TerminalSnippet>) {
+        setState { copy(snippets = snippets) }
+        screenModelScope.launch { userPreferencesRepository.setTerminalSnippets(snippets) }
+    }
+
+    private fun normalizeSnippetContent(content: String): String =
+            content.replace("\r\n", "\n").replace('\r', '\n')
 
     // ─── 内部类型 ───
 

@@ -18,4 +18,5 @@ REQUEST.MD
 .claude/
 .vscode/
 .gradle-home/
+.gradle-user/
 .kotlin/
