@@ -84,6 +84,9 @@
     <string name="tcp_connections">TCP</string>
     <string name="udp_connections">UDP</string>
     <string name="node_uptime">运行时长</string>
+    <string name="node_expiry_badge_expired">已到期</string>
+    <string name="node_expiry_badge_long_term">长期</string>
+    <string name="node_expiry_badge_remaining">%1$s</string>
     <string name="node_expand">展开</string>
     <string name="node_collapse">收起</string>
     <string name="node_traffic_up">上传总流量</string>

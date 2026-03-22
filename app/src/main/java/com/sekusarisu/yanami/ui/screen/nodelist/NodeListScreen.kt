@@ -919,5 +919,9 @@ private fun previewNode(
                                 2 -> "min"
                                 3 -> "up"
                                 else -> "down"
-                        }
+                        },
+                expiredAt =
+                        if (index % 3 == 0) "2026-04-${10 + index}T12:00:00"
+                        else if (index % 4 == 0) "2026-03-23 08:00:00"
+                        else null
         )

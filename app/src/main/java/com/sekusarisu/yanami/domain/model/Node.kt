@@ -1,5 +1,12 @@
 package com.sekusarisu.yanami.domain.model
 
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
 /**
  * 领域模型 — 服务器节点
  *
@@ -39,7 +46,8 @@ data class Node(
         val arch: String = "",
         val gpuName: String = "",
         val trafficLimit: Long = 0,
-        val trafficLimitType: String = ""
+        val trafficLimitType: String = "",
+        val expiredAt: String? = null
 )
 
 data class TrafficLimitUsage(
@@ -47,6 +55,12 @@ data class TrafficLimitUsage(
         val limit: Long,
         val type: String,
         val usagePercent: Double
+)
+
+data class NodeExpiryStatus(
+        val expiryInstant: Instant,
+        val remainingSeconds: Long,
+        val isExpired: Boolean
 )
 
 fun Node.calculateTrafficLimitUsage(): TrafficLimitUsage? {
@@ -74,3 +88,43 @@ fun Node.calculateTrafficLimitUsage(): TrafficLimitUsage? {
 }
 
 private val SUPPORTED_TRAFFIC_LIMIT_TYPES = setOf("sum", "max", "min", "up", "down")
+
+fun Node.calculateExpiryStatus(
+        now: Instant = Instant.now(),
+        zoneId: ZoneId = ZoneId.systemDefault()
+): NodeExpiryStatus? {
+        val raw = expiredAt?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        val expiryInstant = parseNodeExpiryInstant(raw, zoneId) ?: return null
+        val remainingSeconds = expiryInstant.epochSecond - now.epochSecond
+        return NodeExpiryStatus(
+                expiryInstant = expiryInstant,
+                remainingSeconds = remainingSeconds,
+                isExpired = remainingSeconds <= 0
+        )
+}
+
+private fun parseNodeExpiryInstant(value: String, zoneId: ZoneId): Instant? {
+        return runCatching { Instant.parse(value) }.getOrNull()
+                ?: runCatching { OffsetDateTime.parse(value).toInstant() }.getOrNull()
+                ?: runCatching {
+                            LocalDateTime.parse(value, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                    .atZone(zoneId)
+                                    .toInstant()
+                    }
+                        .getOrNull()
+                ?: runCatching {
+                            LocalDateTime.parse(
+                                            value,
+                                            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                                    )
+                                    .atZone(zoneId)
+                                    .toInstant()
+                    }
+                        .getOrNull()
+                ?: runCatching {
+                            LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE)
+                                    .atStartOfDay(zoneId)
+                                    .toInstant()
+                    }
+                        .getOrNull()
+}

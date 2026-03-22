@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Timelapse
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -46,7 +47,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.sekusarisu.yanami.R
 import com.sekusarisu.yanami.domain.model.Node
+import com.sekusarisu.yanami.domain.model.NodeExpiryStatus
 import com.sekusarisu.yanami.domain.model.TrafficLimitUsage
+import com.sekusarisu.yanami.domain.model.calculateExpiryStatus
 import com.sekusarisu.yanami.domain.model.calculateTrafficLimitUsage
 import com.sekusarisu.yanami.ui.screen.soundClick
 import com.sekusarisu.yanami.ui.traffic.formatTrafficLimitPercent
@@ -68,6 +71,7 @@ fun NodeCard(node: Node, onClick: () -> Unit, isExpanded: Boolean, modifier: Mod
                         )
         ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                        val expiryStatus = node.calculateExpiryStatus()
                         // ── 第一行：旗帜 + 名称 + 运行时长 + 在线状态 ──
                         Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -92,6 +96,10 @@ fun NodeCard(node: Node, onClick: () -> Unit, isExpanded: Boolean, modifier: Mod
                                 if (node.isOnline) {
                                         Spacer(modifier = Modifier.width(6.dp))
                                         UptimeBadge(uptime = node.uptime)
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                }
+                                if (expiryStatus != null) {
+                                        ExpiryBadge(expiryStatus = expiryStatus)
                                         Spacer(modifier = Modifier.width(6.dp))
                                 }
                                 // 在线状态标识
@@ -398,6 +406,51 @@ private fun StatusBadge(isOnline: Boolean) {
         }
 }
 
+@Composable
+private fun ExpiryBadge(expiryStatus: NodeExpiryStatus) {
+        val (bgColor, textColor) =
+                when {
+                        expiryStatus.isExpired ->
+                                MaterialTheme.colorScheme.errorContainer to
+                                        MaterialTheme.colorScheme.onErrorContainer
+                        expiryStatus.remainingSeconds <= 3 * 86_400 ->
+                                MaterialTheme.colorScheme.errorContainer to
+                                        MaterialTheme.colorScheme.onErrorContainer
+                        expiryStatus.remainingSeconds <= 14 * 86_400 ->
+                                MaterialTheme.colorScheme.tertiaryContainer to
+                                        MaterialTheme.colorScheme.onTertiaryContainer
+                        else ->
+                                MaterialTheme.colorScheme.secondaryContainer to
+                                        MaterialTheme.colorScheme.onSecondaryContainer
+                }
+
+        androidx.compose.material3.Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = bgColor
+        ) {
+                Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(vertical = 2.dp, horizontal = 8.dp)
+                ) {
+                        Icon(
+                                Icons.Default.Timelapse,
+                                contentDescription = stringResource(R.string.node_expiry_badge_remaining),
+                                modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(
+                                modifier = Modifier.width(2.dp)
+                        )
+                        Text(
+                                text = formatExpiryBadgeText(expiryStatus),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Medium,
+                                color = textColor,
+                        )
+                }
+        }
+}
+
 // ─── 工具函数 ───
 
 @Composable
@@ -458,6 +511,33 @@ fun formatUptime(seconds: Long): String {
                 days > 0 -> "${days}d ${hours}h"
                 hours > 0 -> "${hours}h ${mins}m"
                 else -> "${mins}m"
+        }
+}
+
+@Composable
+private fun formatExpiryBadgeText(expiryStatus: NodeExpiryStatus): String {
+        if (expiryStatus.isExpired) {
+                return stringResource(R.string.node_expiry_badge_expired)
+        }
+        if (expiryStatus.remainingSeconds > 3L * 365 * 86_400) {
+                return stringResource(R.string.node_expiry_badge_long_term)
+        }
+        return stringResource(
+                R.string.node_expiry_badge_remaining,
+                formatRemainingDurationShort(expiryStatus.remainingSeconds)
+        )
+}
+
+private fun formatRemainingDurationShort(remainingSeconds: Long): String {
+        val days = remainingSeconds / 86_400
+        val hours = (remainingSeconds % 86_400) / 3_600
+        val minutes = (remainingSeconds % 3_600) / 60
+
+        return when {
+                days > 0 -> "${days}d"
+                hours > 0 -> "${hours}h"
+                minutes > 0 -> "${minutes}m"
+                else -> "<1m"
         }
 }
 
@@ -575,7 +655,8 @@ fun NodeCardPreview() {
         arch = "amd64",
         gpuName = "",
         trafficLimit = 1_000L * 1024 * 1024 * 1024,
-        trafficLimitType = "sum"
+        trafficLimitType = "sum",
+        expiredAt = "2026-04-15T12:00:00"
     )
     MaterialTheme {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {

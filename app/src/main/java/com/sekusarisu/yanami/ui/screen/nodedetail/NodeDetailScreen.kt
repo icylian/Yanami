@@ -1397,7 +1397,8 @@ fun ServerInfoCardPreview() {
         arch = "x86_64",
         gpuName = "",
         trafficLimit = 64L * 1024 * 1024 * 1024,
-        trafficLimitType = "sum"
+        trafficLimitType = "sum",
+        expiredAt = "2026-04-15T12:00:00"
     )
     MaterialTheme {
         ServerInfoCard(node = sampleNode)

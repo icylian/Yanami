@@ -84,6 +84,9 @@
     <string name="tcp_connections">TCP</string>
     <string name="udp_connections">UDP</string>
     <string name="node_uptime">稼働時間</string>
+    <string name="node_expiry_badge_expired">期限切れ</string>
+    <string name="node_expiry_badge_long_term">長期</string>
+    <string name="node_expiry_badge_remaining">%1$s</string>
     <string name="node_expand">展開</string>
     <string name="node_collapse">折りたたむ</string>
     <string name="node_traffic_up">アップロード総通信量</string>
