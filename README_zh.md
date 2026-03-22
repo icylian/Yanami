@@ -2,6 +2,10 @@
 
 # Yanami
 
+<p style="text-align: center;">
+    <img alt="banner" src="assets/banner.png">
+</p>
+
 **Yanami** 是 [Komari](https://github.com/komari-monitor/komari) 服务器监控工具的 Android 客户端，采用 Material Design 3 设计语言构建。
 
 > A Material Design 3 Android client for the Komari server monitoring tool.
