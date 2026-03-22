@@ -2,6 +2,9 @@ English | [简体中文](README_zh.md)
 
 # Yanami
 
+![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Ficylian%2FYanami&label=icylian%2FYanami&icon=github&color=%23feb272&message=&style=flat&tz=UTC) 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/icylian/Yanami)
+
 <p style="text-align: center;">
     <img alt="banner" src="assets/banner.png">
 </p>
