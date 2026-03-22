@@ -734,10 +734,11 @@ fun StateContentPreview() {
     }
 }
 
-@Preview(name = "NodeList Tablet", showBackground = true, widthDp = 1280, heightDp = 800)
+@Preview(name = "NodeList Tablet", showBackground = true, widthDp = 1280, heightDp = 900)
+@Preview(name = "NodeList Tablet", showBackground = true)
 @Composable
 private fun NodeListTabletPreview() {
-    YanamiTheme(themeColor = ThemeColor.BLUE_MTB, darkTheme = false) {
+    YanamiTheme(themeColor = ThemeColor.BLUE_MTB, darkTheme = true) {
         Surface(color = MaterialTheme.colorScheme.background) {
             Row(modifier = Modifier.fillMaxSize()) {
                 NodeListTabletPreviewRail()
@@ -840,13 +841,34 @@ private fun nodeListTabletPreviewState(): NodeListContract.State {
                         name = "SG-Singapore-03",
                         region = "🇸🇬",
                         group = "Asia",
-                        isOnline = false
+                        isOnline = true
                     ),
                     previewNode(
                         index = 9,
                         name = "DE-Frankfurt-04",
                         region = "🇩🇪",
                         group = "Europe",
+                        isOnline = true
+                    ),
+                    previewNode(
+                        index = 10,
+                        name = "FR-Paris-05",
+                        region = "🇫🇷",
+                        group = "Europe",
+                        isOnline = true
+                    ),
+                    previewNode(
+                        index = 11,
+                        name = "US-Fremont-06",
+                        region = "🇺🇸",
+                        group = "America",
+                        isOnline = false
+                    ),
+                    previewNode(
+                        index = 12,
+                        name = "CA-Toronto-07",
+                        region = "🇨🇦",
+                        group = "America",
                         isOnline = false
                     )
             )
