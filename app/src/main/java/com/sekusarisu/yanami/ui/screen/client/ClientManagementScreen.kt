@@ -1,6 +1,7 @@
 package com.sekusarisu.yanami.ui.screen.client
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +26,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Timelapse
@@ -51,6 +54,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -79,6 +85,8 @@ import com.sekusarisu.yanami.ui.screen.server.ServerReLoginScreen
 import com.sekusarisu.yanami.ui.screen.soundClick
 import com.sekusarisu.yanami.ui.theme.ThemeColor
 import com.sekusarisu.yanami.ui.theme.YanamiTheme
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 class ClientManagementScreen : Screen {
 
@@ -91,6 +99,15 @@ class ClientManagementScreen : Screen {
         val context = LocalContext.current
         val clipboard = LocalClipboardManager.current
         val lifecycleOwner = LocalLifecycleOwner.current
+        val lazyListState = rememberLazyListState()
+        var sortModeClients by remember(state.clients) { mutableStateOf(state.clients) }
+        val displayedClients = if (state.isSortMode) sortModeClients else state.filteredClients
+        val reorderableLazyListState =
+                rememberReorderableLazyListState(lazyListState = lazyListState) { from, to ->
+                    if (!state.isSortMode || state.isReordering)
+                            return@rememberReorderableLazyListState
+                    sortModeClients = sortModeClients.moveItem(from.index, to.index)
+                }
 
         DisposableEffect(lifecycleOwner) {
             val observer = LifecycleEventObserver { _, event ->
@@ -220,6 +237,7 @@ class ClientManagementScreen : Screen {
                                                     ClientManagementContract.Event.SearchChanged(it)
                                             )
                                         },
+                                        enabled = !state.isSortMode,
                                         label = {
                                             Text(
                                                     stringResource(
@@ -241,29 +259,53 @@ class ClientManagementScreen : Screen {
                                             text =
                                                     stringResource(
                                                             R.string.client_management_total_count,
-                                                            state.filteredClients.size,
+                                                            displayedClients.size,
                                                             state.clients.size
                                                     ),
                                             style = MaterialTheme.typography.bodyMedium
                                     )
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                                text =
-                                                        stringResource(
-                                                                R.string.client_management_mask_ip
-                                                        ),
-                                                style = MaterialTheme.typography.bodyMedium
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Switch(
-                                                checked = state.maskIpAddress,
-                                                onCheckedChange = {
-                                                    viewModel.onEvent(
-                                                            ClientManagementContract.Event
-                                                                    .ToggleMaskIpAddress(it)
-                                                    )
-                                                }
-                                        )
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                    text =
+                                                            stringResource(
+                                                                    R.string
+                                                                            .client_management_mask_ip
+                                                            ),
+                                                    style = MaterialTheme.typography.bodyMedium
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Switch(
+                                                    checked = state.maskIpAddress,
+                                                    onCheckedChange = {
+                                                        viewModel.onEvent(
+                                                                ClientManagementContract.Event
+                                                                        .ToggleMaskIpAddress(it)
+                                                        )
+                                                    },
+                                                    enabled = !state.isSortMode
+                                            )
+                                        }
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                    text =
+                                                            stringResource(
+                                                                    R.string
+                                                                            .client_management_sort_mode
+                                                            ),
+                                                    style = MaterialTheme.typography.bodyMedium
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Switch(
+                                                    checked = state.isSortMode,
+                                                    onCheckedChange = {
+                                                        viewModel.onEvent(
+                                                                ClientManagementContract.Event
+                                                                        .ToggleSortMode(it)
+                                                        )
+                                                    }
+                                            )
+                                        }
                                     }
                                 }
 
@@ -272,6 +314,7 @@ class ClientManagementScreen : Screen {
                                 Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
                                     FilterChip(
                                             selected = state.selectedGroup == null,
+                                            enabled = !state.isSortMode,
                                             onClick = {
                                                 viewModel.onEvent(
                                                         ClientManagementContract.Event.GroupSelected(
@@ -287,6 +330,7 @@ class ClientManagementScreen : Screen {
                                         Spacer(modifier = Modifier.width(8.dp))
                                         FilterChip(
                                                 selected = state.selectedGroup == group,
+                                                enabled = !state.isSortMode,
                                                 onClick = {
                                                     viewModel.onEvent(
                                                             ClientManagementContract.Event
@@ -300,6 +344,18 @@ class ClientManagementScreen : Screen {
 
                                 Spacer(modifier = Modifier.height(12.dp))
 
+                                if (state.isSortMode) {
+                                    Text(
+                                            text =
+                                                    stringResource(
+                                                            R.string.client_management_sort_mode_hint
+                                                    ),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
+
                                 if (state.isReordering) {
                                     Text(
                                             text =
@@ -312,7 +368,7 @@ class ClientManagementScreen : Screen {
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
 
-                                if (state.filteredClients.isEmpty()) {
+                                if (displayedClients.isEmpty()) {
                                     Text(
                                             text =
                                                     stringResource(
@@ -322,49 +378,87 @@ class ClientManagementScreen : Screen {
                                     )
                                 } else {
                                     LazyColumn(
+                                            state = lazyListState,
                                             verticalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
                                         itemsIndexed(
-                                                items = state.filteredClients,
+                                                items = displayedClients,
                                                 key = { _, item -> item.uuid }
                                         ) { index, client ->
-                                            ClientCard(
-                                                    client = client,
-                                                    maskIpAddress = state.maskIpAddress,
-                                                    canMoveUp = index > 0,
-                                                    canMoveDown =
-                                                            index < state.filteredClients.lastIndex,
-                                                    onShowToken = {
-                                                        viewModel.onEvent(
-                                                                ClientManagementContract.Event
-                                                                        .ShowTokenClicked(client.uuid)
-                                                        )
-                                                    },
-                                                    onEdit = {
-                                                        viewModel.onEvent(
-                                                                ClientManagementContract.Event
-                                                                        .EditClicked(client.uuid)
-                                                        )
-                                                    },
-                                                    onDelete = {
-                                                        viewModel.onEvent(
-                                                                ClientManagementContract.Event
-                                                                        .DeleteClicked(client.uuid)
-                                                        )
-                                                    },
-                                                    onMoveUp = {
-                                                        viewModel.onEvent(
-                                                                ClientManagementContract.Event
-                                                                        .MoveUpClicked(client.uuid)
-                                                        )
-                                                    },
-                                                    onMoveDown = {
-                                                        viewModel.onEvent(
-                                                                ClientManagementContract.Event
-                                                                        .MoveDownClicked(client.uuid)
-                                                        )
-                                                    }
-                                            )
+                                            if (state.isSortMode) {
+                                                ReorderableItem(
+                                                        state = reorderableLazyListState,
+                                                        key = client.uuid
+                                                ) { isDragging ->
+                                                    SortModeClientCard(
+                                                            client = client,
+                                                            isDragging = isDragging,
+                                                            modifier =
+                                                                    Modifier.longPressDraggableHandle(
+                                                                            enabled =
+                                                                                    !state
+                                                                                            .isReordering,
+                                                                            onDragStopped = {
+                                                                                viewModel.onEvent(
+                                                                                        ClientManagementContract
+                                                                                                .Event
+                                                                                                .CommitReorder(
+                                                                                                        sortModeClients
+                                                                                                                .map {
+                                                                                                                    it
+                                                                                                                            .uuid
+                                                                                                                }
+                                                                                                )
+                                                                                )
+                                                                            }
+                                                                    )
+                                                    )
+                                                }
+                                            } else {
+                                                ClientCard(
+                                                        client = client,
+                                                        maskIpAddress = state.maskIpAddress,
+                                                        canMoveUp = index > 0,
+                                                        canMoveDown =
+                                                                index < displayedClients.lastIndex,
+                                                        onShowToken = {
+                                                            viewModel.onEvent(
+                                                                    ClientManagementContract.Event
+                                                                            .ShowTokenClicked(
+                                                                                    client.uuid
+                                                                            )
+                                                            )
+                                                        },
+                                                        onEdit = {
+                                                            viewModel.onEvent(
+                                                                    ClientManagementContract.Event
+                                                                            .EditClicked(client.uuid)
+                                                            )
+                                                        },
+                                                        onDelete = {
+                                                            viewModel.onEvent(
+                                                                    ClientManagementContract.Event
+                                                                            .DeleteClicked(
+                                                                                    client.uuid
+                                                                            )
+                                                            )
+                                                        },
+                                                        onMoveUp = {
+                                                            viewModel.onEvent(
+                                                                    ClientManagementContract.Event
+                                                                            .MoveUpClicked(client.uuid)
+                                                            )
+                                                        },
+                                                        onMoveDown = {
+                                                            viewModel.onEvent(
+                                                                    ClientManagementContract.Event
+                                                                            .MoveDownClicked(
+                                                                                    client.uuid
+                                                                            )
+                                                            )
+                                                        }
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -459,12 +553,13 @@ private fun ClientCard(
         onEdit: () -> Unit,
         onDelete: () -> Unit,
         onMoveUp: () -> Unit,
-        onMoveDown: () -> Unit
+        onMoveDown: () -> Unit,
+        modifier: Modifier = Modifier
 ) {
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
 
-    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+    OutlinedCard(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             val expiryStatus = client.calculateExpiryStatus()
             val secondaryInfo =
@@ -625,17 +720,17 @@ private fun ClientCard(
                     Text(stringResource(R.string.action_delete))
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onMoveUp, enabled = canMoveUp) {
-                    Icon(Icons.Default.ArrowUpward, contentDescription = null)
-                }
-                OutlinedButton(onClick = onMoveDown, enabled = canMoveDown) {
-                    Icon(Icons.Default.ArrowDownward, contentDescription = null)
-                }
-            }
+//
+//            Spacer(modifier = Modifier.height(8.dp))
+//
+//            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+//                OutlinedButton(onClick = onMoveUp, enabled = canMoveUp) {
+//                    Icon(Icons.Default.ArrowUpward, contentDescription = null)
+//                }
+//                OutlinedButton(onClick = onMoveDown, enabled = canMoveDown) {
+//                    Icon(Icons.Default.ArrowDownward, contentDescription = null)
+//                }
+//            }
 //
 //            Spacer(modifier = Modifier.height(8.dp))
 //
@@ -648,6 +743,70 @@ private fun ClientCard(
 //                    style = MaterialTheme.typography.bodySmall
 //            )
         }
+    }
+}
+
+@Composable
+private fun SortModeClientCard(
+        client: ManagedClient,
+        isDragging: Boolean,
+        modifier: Modifier = Modifier
+) {
+    val secondaryInfo =
+            listOf(client.group, client.os, client.version)
+                    .filter { it.isNotBlank() }
+                    .joinToString(" · ")
+
+    OutlinedCard(
+            modifier =
+                    modifier
+                            .fillMaxWidth()
+                            .then(
+                                    if (isDragging) {
+                                        Modifier
+                                                .background(
+                                                        color =
+                                                                MaterialTheme.colorScheme
+                                                                        .primaryContainer,
+                                                        shape = RoundedCornerShape(12.dp)
+                                                )
+                                    } else {
+                                        Modifier
+                                    }
+                            )
+    ) {
+        Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                        text = client.region + " " + client.name,
+                        style = MaterialTheme.typography.titleMedium
+                )
+                if (secondaryInfo.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                            text = secondaryInfo,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Icon(
+                    imageVector = Icons.Default.DragHandle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+private fun List<ManagedClient>.moveItem(fromIndex: Int, toIndex: Int): List<ManagedClient> {
+    if (fromIndex == toIndex || fromIndex !in indices || toIndex !in indices) return this
+    return toMutableList().apply {
+        add(toIndex, removeAt(fromIndex))
     }
 }
 
@@ -774,6 +933,14 @@ private fun ClientCardPreviewMasked() {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun SortModeClientCardPreview() {
+    YanamiTheme(themeColor = ThemeColor.BLUE_MTB, darkTheme = true) {
+        SortModeClientCard(client = previewManagedClient(hidden = true), isDragging = false)
+    }
+}
+
 @Preview(name = "Client List", showBackground = true, widthDp = 1280, heightDp = 900)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -845,6 +1012,97 @@ private fun ClientManagementContentPreview() {
                                     onMoveUp = {},
                                     onMoveDown = {}
                             )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview(name = "Client List Sort Mode", showBackground = true, widthDp = 1280, heightDp = 900)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ClientManagementSortModePreview() {
+    YanamiTheme(themeColor = ThemeColor.BLUE_MTB, darkTheme = true) {
+        Scaffold(
+                topBar = {
+                    TopAppBar(
+                            title = { Text("Komari Admin") },
+                            navigationIcon = {
+                                IconButton(onClick = {}) {
+                                    Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                            contentDescription = null
+                                    )
+                                }
+                            },
+                            actions = {
+                                IconButton(onClick = {}) {
+                                    Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = null
+                                    )
+                                }
+                            }
+                    )
+                }
+        ) { innerPadding ->
+            AdaptiveContentPane(modifier = Modifier.padding(innerPadding), maxWidth = 920.dp) {
+                Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+                    OutlinedTextField(
+                            value = "",
+                            onValueChange = {},
+                            enabled = false,
+                            label = { Text("搜索客户端…") },
+                            modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("已显示 3 / 3")
+                        Column(horizontalAlignment = Alignment.End) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("IP 打码")
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Switch(checked = false, onCheckedChange = {}, enabled = false)
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("排序模式")
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Switch(checked = true, onCheckedChange = {})
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                        FilterChip(
+                                selected = true,
+                                onClick = {},
+                                enabled = false,
+                                label = { Text("全部") }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        FilterChip(
+                                selected = false,
+                                onClick = {},
+                                enabled = false,
+                                label = { Text("ISIF") }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                            text = "长按卡片可拖拽排序",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        itemsIndexed(previewManagedClients()) { _, client ->
+                            SortModeClientCard(client = client, isDragging = false)
                         }
                     }
                 }

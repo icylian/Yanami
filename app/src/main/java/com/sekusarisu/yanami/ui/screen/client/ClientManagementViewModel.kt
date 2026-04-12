@@ -46,6 +46,7 @@ class ClientManagementViewModel(
             is ClientManagementContract.Event.ToggleMaskIpAddress -> {
                 setState { copy(maskIpAddress = event.enabled) }
             }
+            is ClientManagementContract.Event.ToggleSortMode -> toggleSortMode(event.enabled)
             is ClientManagementContract.Event.AddClicked -> {
                 sendEffect(ClientManagementContract.Effect.NavigateToCreate)
             }
@@ -69,6 +70,9 @@ class ClientManagementViewModel(
             }
             is ClientManagementContract.Event.MoveUpClicked -> moveClient(event.uuid, -1)
             is ClientManagementContract.Event.MoveDownClicked -> moveClient(event.uuid, 1)
+            is ClientManagementContract.Event.CommitReorder -> {
+                commitReorder(event.orderedUuids)
+            }
         }
     }
 
@@ -139,6 +143,21 @@ class ClientManagementViewModel(
         }
     }
 
+    private fun toggleSortMode(enabled: Boolean) {
+        if (enabled &&
+                        (currentState.searchQuery.isNotBlank() ||
+                                currentState.selectedGroup != null)
+        ) {
+            sendEffect(
+                    ClientManagementContract.Effect.ShowToast(
+                            context.getString(R.string.client_management_sort_mode_requires_all)
+                    )
+            )
+            return
+        }
+        setState { copy(isSortMode = enabled) }
+    }
+
     private fun deletePendingClient() {
         val target = currentState.pendingDeleteClient ?: return
         setState { copy(pendingDeleteClient = null) }
@@ -202,6 +221,46 @@ class ClientManagementViewModel(
                         sessionToken = sessionToken,
                         authType = server.authType,
                         weights = mapOf(current.uuid to target.weight, target.uuid to current.weight)
+                )
+                setState { copy(isReordering = false) }
+                refreshClients()
+            }
+        }
+    }
+
+    private fun commitReorder(orderedUuids: List<String>) {
+        val currentClients = currentState.clients
+        val currentOrder = currentClients.map { it.uuid }
+        if (orderedUuids == currentOrder) return
+        if (orderedUuids.size != currentClients.size) return
+        if (orderedUuids.toSet() != currentOrder.toSet()) return
+
+        val reorderedWeights =
+                orderedUuids.mapIndexed { index, uuid ->
+                    uuid to (index + 1) * 10
+                }
+
+        setState { copy(isReordering = true) }
+        screenModelScope.launch {
+            withServerSession(
+                    onAuthError = ::handleSessionExpired,
+                    onError = { e ->
+                        setState { copy(isReordering = false) }
+                        sendEffect(
+                                ClientManagementContract.Effect.ShowToast(
+                                        context.getString(
+                                                R.string.client_management_reorder_failed,
+                                                e.message
+                                        )
+                                )
+                        )
+                    }
+            ) { server, sessionToken ->
+                clientRepository.reorderClients(
+                        baseUrl = server.baseUrl,
+                        sessionToken = sessionToken,
+                        authType = server.authType,
+                        weights = reorderedWeights.toMap()
                 )
                 setState { copy(isReordering = false) }
                 refreshClients()

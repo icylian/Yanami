@@ -17,6 +17,7 @@ object ClientManagementContract {
             val groups: List<String> = emptyList(),
             val selectedGroup: String? = null,
             val maskIpAddress: Boolean = true,
+            val isSortMode: Boolean = false,
             val tokenDialogClient: ManagedClient? = null,
             val pendingDeleteClient: ManagedClient? = null,
             val error: String? = null,
@@ -29,6 +30,7 @@ object ClientManagementContract {
         data class SearchChanged(val query: String) : Event
         data class GroupSelected(val group: String?) : Event
         data class ToggleMaskIpAddress(val enabled: Boolean) : Event
+        data class ToggleSortMode(val enabled: Boolean) : Event
         data object AddClicked : Event
         data class EditClicked(val uuid: String) : Event
         data class DeleteClicked(val uuid: String) : Event
@@ -38,6 +40,7 @@ object ClientManagementContract {
         data object DismissToken : Event
         data class MoveUpClicked(val uuid: String) : Event
         data class MoveDownClicked(val uuid: String) : Event
+        data class CommitReorder(val orderedUuids: List<String>) : Event
     }
 
     sealed interface Effect : UiEffect {

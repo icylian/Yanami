@@ -35,6 +35,7 @@ biometric = "1.1.0"
 datastorePreferences = "1.2.0"
 glance = "1.1.1"
 workManager = "2.10.0"
+reorderable = "3.0.0"
 
 # Testing
 junit = "4.13.2"
@@ -100,6 +101,7 @@ datastore-preferences = { group = "androidx.datastore", name = "datastore-prefer
 glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
 glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glance" }
 work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
+reorderable = { group = "sh.calvin.reorderable", name = "reorderable", version.ref = "reorderable" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
