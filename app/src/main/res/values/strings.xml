@@ -98,7 +98,7 @@
     <string name="client_management_title">客户端管理</string>
     <string name="client_management_search">搜索客户端…</string>
     <string name="client_management_total_count">已显示 %1$d / %2$d</string>
-    <string name="client_management_show_hidden">显示隐藏项</string>
+    <string name="client_management_mask_ip">IP 打码</string>
     <string name="client_management_empty">没有匹配的客户端</string>
     <string name="client_management_load_failed">加载客户端失败: %s</string>
     <string name="client_management_refresh_failed">刷新客户端失败: %s</string>
@@ -107,7 +107,6 @@
     <string name="client_management_reorder_failed">更新排序失败: %s</string>
     <string name="client_management_reordering">正在更新排序…</string>
     <string name="client_management_guest_unsupported">游客模式不支持客户端管理</string>
-    <string name="client_management_weight_label">权重 %1$d</string>
     <string name="client_management_hidden_badge">已隐藏</string>
     <string name="client_management_show_token">查看 Token</string>
     <string name="client_management_token_title">客户端 Token</string>
@@ -115,6 +114,13 @@
     <string name="client_management_delete_title">删除客户端</string>
     <string name="client_management_delete_confirm">确定要删除「%s」吗？此操作不可恢复。</string>
     <string name="client_management_updated_at">更新时间：%s</string>
+    <string name="client_management_ipv4">IPv4: %s</string>
+    <string name="client_management_ipv6">IPv6: %s</string>
+    <string name="client_management_agent_version">Agent: %s</string>
+    <string name="client_management_billing_summary">账单：%1$s%2$s / %3$d 天 · %4$s</string>
+    <string name="client_management_auto_renewal_on">自动续费</string>
+    <string name="client_management_auto_renewal_off">手动续费</string>
+    <string name="client_management_expired_at">到期时间：%s</string>
     <string name="client_management_create">新建客户端</string>
     <string name="client_create_hint">可选填写名称；留空时服务端会生成默认名称。</string>
     <string name="client_create_failed">创建客户端失败: %s</string>

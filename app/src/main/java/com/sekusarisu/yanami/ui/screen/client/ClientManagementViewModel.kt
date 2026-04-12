@@ -43,9 +43,8 @@ class ClientManagementViewModel(
                 setState { copy(selectedGroup = event.group) }
                 applyFilters()
             }
-            is ClientManagementContract.Event.ToggleShowHidden -> {
-                setState { copy(showHidden = event.show) }
-                applyFilters()
+            is ClientManagementContract.Event.ToggleMaskIpAddress -> {
+                setState { copy(maskIpAddress = event.enabled) }
             }
             is ClientManagementContract.Event.AddClicked -> {
                 sendEffect(ClientManagementContract.Effect.NavigateToCreate)
@@ -232,8 +231,7 @@ class ClientManagementViewModel(
                                     client.remark.lowercase().contains(query)
                     val matchesGroup =
                             state.selectedGroup == null || client.group == state.selectedGroup
-                    val matchesHidden = state.showHidden || !client.hidden
-                    matchesSearch && matchesGroup && matchesHidden
+                    matchesSearch && matchesGroup
                 }
         setState { copy(filteredClients = filtered) }
     }

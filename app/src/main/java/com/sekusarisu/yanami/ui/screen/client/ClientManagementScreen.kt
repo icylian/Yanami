@@ -52,6 +52,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -67,6 +68,8 @@ import com.sekusarisu.yanami.ui.screen.server.AddServerScreen
 import com.sekusarisu.yanami.ui.screen.server.ServerListScreen
 import com.sekusarisu.yanami.ui.screen.server.ServerReLoginScreen
 import com.sekusarisu.yanami.ui.screen.soundClick
+import com.sekusarisu.yanami.ui.theme.ThemeColor
+import com.sekusarisu.yanami.ui.theme.YanamiTheme
 
 class ClientManagementScreen : Screen {
 
@@ -238,17 +241,17 @@ class ClientManagementScreen : Screen {
                                         Text(
                                                 text =
                                                         stringResource(
-                                                                R.string.client_management_show_hidden
+                                                                R.string.client_management_mask_ip
                                                         ),
                                                 style = MaterialTheme.typography.bodyMedium
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Switch(
-                                                checked = state.showHidden,
+                                                checked = state.maskIpAddress,
                                                 onCheckedChange = {
                                                     viewModel.onEvent(
                                                             ClientManagementContract.Event
-                                                                    .ToggleShowHidden(it)
+                                                                    .ToggleMaskIpAddress(it)
                                                     )
                                                 }
                                         )
@@ -318,6 +321,7 @@ class ClientManagementScreen : Screen {
                                         ) { index, client ->
                                             ClientCard(
                                                     client = client,
+                                                    maskIpAddress = state.maskIpAddress,
                                                     canMoveUp = index > 0,
                                                     canMoveDown =
                                                             index < state.filteredClients.lastIndex,
@@ -439,6 +443,7 @@ class ClientManagementScreen : Screen {
 @Composable
 private fun ClientCard(
         client: ManagedClient,
+        maskIpAddress: Boolean,
         canMoveUp: Boolean,
         canMoveDown: Boolean,
         onShowToken: () -> Unit,
@@ -454,32 +459,16 @@ private fun ClientCard(
                     horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(client.name, style = MaterialTheme.typography.titleMedium)
+                    Text(client.region + " " + client.name, style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                             text =
-                                    listOf(client.group, client.region, client.os)
+                                    listOf(client.group, client.os, client.version)
                                             .filter { it.isNotBlank() }
                                             .joinToString(" · "),
                             style = MaterialTheme.typography.bodyMedium
                     )
                 }
-                AssistChip(
-                        onClick = {},
-                        label = {
-                            Text(
-                                    stringResource(
-                                            R.string.client_management_weight_label,
-                                            client.weight
-                                    )
-                            )
-                        }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (client.hidden) {
                     AssistChip(
                             onClick = {},
@@ -488,12 +477,81 @@ private fun ClientCard(
                             }
                     )
                 }
-                if (client.tags.isNotBlank()) {
-                    AssistChip(onClick = {}, label = { Text(client.tags) })
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState(), true),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (client.ipv4.isNotBlank()) {
+                    AssistChip(
+                            onClick = {},
+                            label = {
+                                Text(
+                                        stringResource(
+                                                R.string.client_management_ipv4,
+                                                client.ipv4.maskedIp(maskIpAddress)
+                                        )
+                                )
+                            }
+                    )
                 }
-                if (client.cpuName.isNotBlank()) {
-                    AssistChip(onClick = {}, label = { Text(client.cpuName) })
+                if (client.ipv6.isNotBlank()) {
+                    AssistChip(
+                            onClick = {},
+                            label = {
+                                Text(
+                                        stringResource(
+                                                R.string.client_management_ipv6,
+                                                client.ipv6.maskedIp(maskIpAddress)
+                                        )
+                                )
+                            }
+                    )
                 }
+//                if (client.version.isNotBlank()) {
+//                    AssistChip(
+//                            onClick = {},
+//                            label = {
+//                                Text(
+//                                        stringResource(
+//                                                R.string.client_management_agent_version,
+//                                                client.version
+//                                        )
+//                                )
+//                            }
+//                    )
+//                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                    text =
+                            stringResource(
+                                    R.string.client_management_billing_summary,
+                                    client.currency,
+                                    client.price.billingText(),
+                                    client.billingCycle,
+                                    if (client.autoRenewal)
+                                            stringResource(R.string.client_management_auto_renewal_on)
+                                    else stringResource(R.string.client_management_auto_renewal_off)
+                            ),
+                    style = MaterialTheme.typography.bodyMedium
+            )
+
+            if (!client.expiredAt.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                        text =
+                                stringResource(
+                                        R.string.client_management_expired_at,
+                                        client.expiredAt
+                                ),
+                        style = MaterialTheme.typography.bodySmall
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -526,17 +584,267 @@ private fun ClientCard(
                     Icon(Icons.Default.ArrowDownward, contentDescription = null)
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                    text =
-                            stringResource(
-                                    R.string.client_management_updated_at,
-                                    client.updatedAt
-                            ),
-                    style = MaterialTheme.typography.bodySmall
-            )
+//
+//            Spacer(modifier = Modifier.height(8.dp))
+//
+//            Text(
+//                    text =
+//                            stringResource(
+//                                    R.string.client_management_updated_at,
+//                                    client.updatedAt
+//                            ),
+//                    style = MaterialTheme.typography.bodySmall
+//            )
         }
     }
 }
+
+private fun String.maskedIp(mask: Boolean): String {
+    if (!mask || isBlank()) return this
+    return if (contains('.')) {
+        val parts = split('.')
+        if (parts.size == 4) "${parts[0]}.${parts[1]}.*.*" else this
+    } else if (contains(':')) {
+        maskIpv6Address()
+    } else {
+        this
+    }
+}
+
+private fun String.maskIpv6Address(): String {
+    val normalized = substringBefore('%')
+    val ipv4Tail = normalized.substringAfterLast(':', "")
+    if (ipv4Tail.contains('.')) {
+        return this
+    }
+
+    val expanded = normalized.expandIpv6Segments() ?: return this
+    return expanded.take(2).joinToString(":") { it.trimLeadingIpv6Zeros() } + "::*"
+}
+
+private fun String.expandIpv6Segments(): List<String>? {
+    val value = trim().lowercase()
+    if (value.isEmpty()) return null
+    if (value.split("::").size > 2) return null
+
+    val hasCompression = value.contains("::")
+    val segments =
+            if (hasCompression) {
+                val halves = value.split("::", limit = 2)
+                val left = halves[0].split(':').filter { it.isNotEmpty() }
+                val right = halves[1].split(':').filter { it.isNotEmpty() }
+                val missing = 8 - (left.size + right.size)
+                if (missing < 1) return null
+                left + List(missing) { "0" } + right
+            } else {
+                value.split(':')
+            }
+
+    if (segments.size != 8) return null
+    if (segments.any { it.length > 4 || it.any { ch -> !ch.isDigit() && ch !in 'a'..'f' } }) {
+        return null
+    }
+
+    return segments.map { it.padStart(4, '0') }
+}
+
+private fun String.trimLeadingIpv6Zeros(): String {
+    val trimmed = trimStart('0')
+    return if (trimmed.isEmpty()) "0" else trimmed
+}
+
+private fun Double.billingText(): String {
+    val asLong = toLong()
+    return if (asLong.toDouble() == this) asLong.toString() else toString()
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ClientCardPreviewUnmasked() {
+    YanamiTheme(themeColor = ThemeColor.BLUE_MTB, darkTheme = true) {
+        ClientCard(
+                client = previewManagedClient(),
+                maskIpAddress = false,
+                canMoveUp = true,
+                canMoveDown = true,
+                onShowToken = {},
+                onEdit = {},
+                onDelete = {},
+                onMoveUp = {},
+                onMoveDown = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ClientCardPreviewMasked() {
+    YanamiTheme(themeColor = ThemeColor.BLUE_MTB, darkTheme = true) {
+        ClientCard(
+                client = previewManagedClient(hidden = true),
+                maskIpAddress = true,
+                canMoveUp = false,
+                canMoveDown = true,
+                onShowToken = {},
+                onEdit = {},
+                onDelete = {},
+                onMoveUp = {},
+                onMoveDown = {}
+        )
+    }
+}
+
+@Preview(name = "Client List", showBackground = true, widthDp = 1280, heightDp = 900)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ClientManagementContentPreview() {
+    YanamiTheme(themeColor = ThemeColor.BLUE_MTB, darkTheme = true) {
+        Scaffold(
+                topBar = {
+                    TopAppBar(
+                            title = { Text("Komari Admin") },
+                            navigationIcon = {
+                                IconButton(onClick = {}) {
+                                    Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                            contentDescription = null
+                                    )
+                                }
+                            },
+                            actions = {
+                                IconButton(onClick = {}) {
+                                    Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = null
+                                    )
+                                }
+                            }
+                    )
+                }
+        ) { innerPadding ->
+            AdaptiveContentPane(modifier = Modifier.padding(innerPadding), maxWidth = 920.dp) {
+                Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                    OutlinedTextField(
+                            value = "",
+                            onValueChange = {},
+                            label = { Text("搜索客户端…") },
+                            modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("已显示 3 / 3")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("IP 打码")
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Switch(checked = true, onCheckedChange = {})
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                        FilterChip(selected = true, onClick = {}, label = { Text("全部") })
+                        Spacer(modifier = Modifier.width(8.dp))
+                        FilterChip(selected = false, onClick = {}, label = { Text("ISIF") })
+                        Spacer(modifier = Modifier.width(8.dp))
+                        FilterChip(selected = false, onClick = {}, label = { Text("PROD") })
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        itemsIndexed(previewManagedClients()) { index, client ->
+                            ClientCard(
+                                    client = client,
+                                    maskIpAddress = true,
+                                    canMoveUp = index > 0,
+                                    canMoveDown = index < previewManagedClients().lastIndex,
+                                    onShowToken = {},
+                                    onEdit = {},
+                                    onDelete = {},
+                                    onMoveUp = {},
+                                    onMoveDown = {}
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun previewManagedClients(): List<ManagedClient> =
+        listOf(
+                previewManagedClient(),
+                previewManagedClient(
+                        uuid = "11111111-2222-4333-8444-555555555555",
+                        name = "DEMO_SG_EDGE",
+                        ipv4 = "198.51.100.24",
+                        ipv6 = "",
+                        version = "1.2.0-preview",
+                        price = 19.9,
+                        billingCycle = 30,
+                        expiredAt = "2026-09-15T00:00:00Z",
+                        hidden = false,
+                        updatedAt = "2026-04-01T08:12:00Z"
+                ),
+                previewManagedClient(
+                        uuid = "66666666-7777-4888-9999-aaaaaaaaaaaa",
+                        name = "DEMO_JP_CORE",
+                        ipv4 = "203.0.113.88",
+                        ipv6 = "2001:db8:abcd:1200::42",
+                        version = "1.2.1",
+                        price = 29.0,
+                        billingCycle = 90,
+                        expiredAt = "2026-12-01T00:00:00Z",
+                        hidden = true,
+                        updatedAt = "2026-04-03T21:45:00Z"
+                )
+        )
+
+private fun previewManagedClient(
+        uuid: String = "d3b07384-d9a2-4f1a-a6ab-7c8d9e0f1122",
+        name: String = "DEMO_HK_NODE_A",
+        ipv4: String = "192.168.242.15",
+        ipv6: String = "2001:db8:10:20::15",
+        version: String = "1.2.0",
+        price: Double = 12.5,
+        billingCycle: Int = 30,
+        expiredAt: String? = "2026-08-05T00:00:00Z",
+        hidden: Boolean = false,
+        updatedAt: String = "2026-04-05T09:21:50Z"
+): ManagedClient =
+        ManagedClient(
+                uuid = uuid,
+                token = "demo_token_preview_01",
+                name = name,
+                cpuName = "Virtual CPU",
+                virtualization = "kvm",
+                arch = "amd64",
+                cpuCores = 2,
+                os = "Debian GNU/Linux 13",
+                kernelVersion = "6.12.0-demo-cloud-amd64",
+                gpuName = "None",
+                ipv4 = ipv4,
+                ipv6 = ipv6,
+                region = "Demo",
+                remark = "",
+                publicRemark = "",
+                memTotal = 2147483648,
+                swapTotal = 0,
+                diskTotal = 53687091200,
+                version = version,
+                weight = 5,
+                price = price,
+                billingCycle = billingCycle,
+                autoRenewal = false,
+                currency = "$",
+                expiredAt = expiredAt,
+                group = "DEMO",
+                tags = "",
+                hidden = hidden,
+                trafficLimit = 0,
+                trafficLimitType = "max",
+                createdAt = "2026-01-01T00:00:00Z",
+                updatedAt = updatedAt
+        )

@@ -16,7 +16,7 @@ object ClientManagementContract {
             val searchQuery: String = "",
             val groups: List<String> = emptyList(),
             val selectedGroup: String? = null,
-            val showHidden: Boolean = true,
+            val maskIpAddress: Boolean = true,
             val tokenDialogClient: ManagedClient? = null,
             val pendingDeleteClient: ManagedClient? = null,
             val error: String? = null,
@@ -28,7 +28,7 @@ object ClientManagementContract {
         data object Retry : Event
         data class SearchChanged(val query: String) : Event
         data class GroupSelected(val group: String?) : Event
-        data class ToggleShowHidden(val show: Boolean) : Event
+        data class ToggleMaskIpAddress(val enabled: Boolean) : Event
         data object AddClicked : Event
         data class EditClicked(val uuid: String) : Event
         data class DeleteClicked(val uuid: String) : Event
