@@ -11,6 +11,8 @@
     <string name="action_retry">重试</string>
     <string name="action_search">搜索</string>
     <string name="action_settings">设置</string>
+    <string name="action_copy">复制</string>
+    <string name="action_close">关闭</string>
 
     <!-- 服务器管理 -->
     <string name="server_management">服务器管理</string>
@@ -93,6 +95,48 @@
     <string name="node_traffic_down">下载总流量</string>
     <string name="node_net_speed">实时速度</string>
     <string name="node_net_traffic">总流量</string>
+    <string name="client_management_title">客户端管理</string>
+    <string name="client_management_search">搜索客户端…</string>
+    <string name="client_management_total_count">已显示 %1$d / %2$d</string>
+    <string name="client_management_show_hidden">显示隐藏项</string>
+    <string name="client_management_empty">没有匹配的客户端</string>
+    <string name="client_management_load_failed">加载客户端失败: %s</string>
+    <string name="client_management_refresh_failed">刷新客户端失败: %s</string>
+    <string name="client_management_deleted">已删除「%s」</string>
+    <string name="client_management_delete_failed">删除客户端失败: %s</string>
+    <string name="client_management_reorder_failed">更新排序失败: %s</string>
+    <string name="client_management_reordering">正在更新排序…</string>
+    <string name="client_management_guest_unsupported">游客模式不支持客户端管理</string>
+    <string name="client_management_weight_label">权重 %1$d</string>
+    <string name="client_management_hidden_badge">已隐藏</string>
+    <string name="client_management_show_token">查看 Token</string>
+    <string name="client_management_token_title">客户端 Token</string>
+    <string name="client_management_token_copied">Token 已复制</string>
+    <string name="client_management_delete_title">删除客户端</string>
+    <string name="client_management_delete_confirm">确定要删除「%s」吗？此操作不可恢复。</string>
+    <string name="client_management_updated_at">更新时间：%s</string>
+    <string name="client_management_create">新建客户端</string>
+    <string name="client_create_hint">可选填写名称；留空时服务端会生成默认名称。</string>
+    <string name="client_create_failed">创建客户端失败: %s</string>
+    <string name="client_create_success_title">客户端已创建</string>
+    <string name="client_edit_title">编辑客户端</string>
+    <string name="client_edit_load_failed">加载客户端详情失败: %s</string>
+    <string name="client_edit_saved">客户端已保存</string>
+    <string name="client_edit_save_failed">保存客户端失败: %s</string>
+    <string name="client_edit_name">名称</string>
+    <string name="client_edit_group">分组</string>
+    <string name="client_edit_tags">标签</string>
+    <string name="client_edit_remark">内部备注</string>
+    <string name="client_edit_public_remark">公开备注</string>
+    <string name="client_edit_weight">权重</string>
+    <string name="client_edit_price">价格</string>
+    <string name="client_edit_billing_cycle">账单周期（天）</string>
+    <string name="client_edit_currency">货币</string>
+    <string name="client_edit_expired_at">到期时间（RFC3339）</string>
+    <string name="client_edit_traffic_limit">流量限制</string>
+    <string name="client_edit_auto_renewal">自动续费</string>
+    <string name="client_edit_hidden">隐藏</string>
+    <string name="client_edit_traffic_limit_type">流量限制类型</string>
 
     <!-- 节点详情 -->
     <string name="node_detail_title">节点详情</string>

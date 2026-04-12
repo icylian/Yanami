@@ -54,6 +54,9 @@ class NodeListViewModel(
             is NodeListContract.Event.NodeClicked -> {
                 sendEffect(NodeListContract.Effect.NavigateToNodeDetail(event.uuid))
             }
+            is NodeListContract.Event.ManageClientsClicked -> {
+                sendEffect(NodeListContract.Effect.NavigateToClientManagement)
+            }
         }
     }
 

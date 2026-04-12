@@ -81,6 +81,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.sekusarisu.yanami.R
 import com.sekusarisu.yanami.domain.model.Node
 import com.sekusarisu.yanami.ui.screen.AdaptiveContentPane
+import com.sekusarisu.yanami.ui.screen.client.ClientManagementScreen
 import com.sekusarisu.yanami.ui.screen.rememberAdaptiveLayoutInfo
 import com.sekusarisu.yanami.ui.screen.nodedetail.NodeDetailScreen
 import com.sekusarisu.yanami.ui.screen.server.AddServerScreen
@@ -119,6 +120,9 @@ class NodeListScreen : Screen {
                     is NodeListContract.Effect.NavigateToNodeDetail -> {
                         navigator.push(NodeDetailScreen(effect.uuid))
                     }
+                    is NodeListContract.Effect.NavigateToClientManagement -> {
+                        navigator.push(ClientManagementScreen())
+                    }
                     is NodeListContract.Effect.NavigateToServerRelogin -> {
                         navigator.replaceAll(ServerListScreen())
                         navigator.push(
@@ -141,6 +145,9 @@ class NodeListScreen : Screen {
                 isAllExpanded = isAllExpanded,
                 isTabletLandscape = adaptiveInfo.isTabletLandscape,
                 onBackClick = soundClick { navigator.pop() },
+                onManageClientsClick = soundClick {
+                    viewModel.onEvent(NodeListContract.Event.ManageClientsClicked)
+                },
                 onToggleExpandClick = soundClick { isAllExpanded = !isAllExpanded },
                 onRefresh = { viewModel.onEvent(NodeListContract.Event.Refresh) },
                 onRetry = { viewModel.onEvent(NodeListContract.Event.Retry) },
@@ -158,6 +165,7 @@ private fun NodeListScaffoldContent(
         isAllExpanded: Boolean,
         isTabletLandscape: Boolean,
         onBackClick: () -> Unit,
+        onManageClientsClick: () -> Unit,
         onToggleExpandClick: () -> Unit,
         onRefresh: () -> Unit,
         onRetry: () -> Unit,
@@ -187,6 +195,15 @@ private fun NodeListScaffoldContent(
                             }
                         },
                         actions = {
+                            IconButton(onClick = onManageClientsClick) {
+                                Icon(
+                                        imageVector = Icons.Default.Settings,
+                                        contentDescription =
+                                                stringResource(
+                                                        R.string.client_management_title
+                                                )
+                                )
+                            }
                             IconButton(onClick = onToggleExpandClick) {
                                 Icon(
                                         imageVector =
@@ -747,6 +764,7 @@ private fun NodeListTabletPreview() {
                         isAllExpanded = true,
                         isTabletLandscape = true,
                         onBackClick = {},
+                        onManageClientsClick = {},
                         onToggleExpandClick = {},
                         onRefresh = {},
                         onRetry = {},

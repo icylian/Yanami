@@ -41,6 +41,9 @@ import com.sekusarisu.yanami.data.local.preferences.UserPreferencesRepository
 import com.sekusarisu.yanami.data.remote.UpdateCheckService
 import com.sekusarisu.yanami.domain.repository.ServerRepository
 import com.sekusarisu.yanami.ui.screen.rememberAdaptiveLayoutInfo
+import com.sekusarisu.yanami.ui.screen.client.ClientCreateScreen
+import com.sekusarisu.yanami.ui.screen.client.ClientEditScreen
+import com.sekusarisu.yanami.ui.screen.client.ClientManagementScreen
 import com.sekusarisu.yanami.ui.screen.nodedetail.NodeDetailScreen
 import com.sekusarisu.yanami.ui.screen.nodelist.NodeListScreen
 import com.sekusarisu.yanami.ui.screen.server.AddServerScreen
@@ -230,7 +233,12 @@ private enum class MainRailDestination {
 
 private fun resolveMainRailDestination(screen: Screen): MainRailDestination =
         when (screen) {
-            is NodeListScreen, is NodeDetailScreen, is SshTerminalScreen -> MainRailDestination.NODES
+            is NodeListScreen,
+            is NodeDetailScreen,
+            is SshTerminalScreen,
+            is ClientManagementScreen,
+            is ClientCreateScreen,
+            is ClientEditScreen -> MainRailDestination.NODES
             is SettingsHubScreen, is SettingsScreen, is AboutScreen -> MainRailDestination.SETTINGS
             is ServerListScreen, is AddServerScreen, is ServerReLoginScreen -> MainRailDestination.SERVERS
             else -> MainRailDestination.SERVERS
