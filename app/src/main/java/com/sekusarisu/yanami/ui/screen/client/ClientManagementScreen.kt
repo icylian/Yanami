@@ -262,60 +262,49 @@ class ClientManagementScreen : Screen {
 
                                 Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                                         verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                            text =
-                                                    stringResource(
-                                                            R.string.client_management_total_count,
-                                                            displayedClients.size,
-                                                            state.clients.size
-                                                    ),
-                                            style = MaterialTheme.typography.bodyMedium
-                                    )
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                    text =
-                                                            stringResource(
-                                                                    R.string
-                                                                            .client_management_mask_ip
-                                                            ),
-                                                    style = MaterialTheme.typography.bodyMedium
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Switch(
-                                                    checked = state.maskIpAddress,
-                                                    onCheckedChange = {
-                                                        viewModel.onEvent(
-                                                                ClientManagementContract.Event
-                                                                        .ToggleMaskIpAddress(it)
-                                                        )
-                                                    },
-                                                    enabled = !state.isSortMode
-                                            )
-                                        }
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                    text =
-                                                            stringResource(
-                                                                    R.string
-                                                                            .client_management_sort_mode
-                                                            ),
-                                                    style = MaterialTheme.typography.bodyMedium
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Switch(
-                                                    checked = state.isSortMode,
-                                                    onCheckedChange = {
-                                                        viewModel.onEvent(
-                                                                ClientManagementContract.Event
-                                                                        .ToggleSortMode(it)
-                                                        )
-                                                    }
-                                            )
-                                        }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                                text =
+                                                        stringResource(
+                                                                R.string
+                                                                        .client_management_mask_ip
+                                                        ),
+                                                style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                                checked = state.maskIpAddress,
+                                                onCheckedChange = {
+                                                    viewModel.onEvent(
+                                                            ClientManagementContract.Event
+                                                                    .ToggleMaskIpAddress(it)
+                                                    )
+                                                },
+                                                enabled = !state.isSortMode
+                                        )
+                                    }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                                text =
+                                                        stringResource(
+                                                                R.string
+                                                                        .client_management_sort_mode
+                                                        ),
+                                                style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Switch(
+                                                checked = state.isSortMode,
+                                                onCheckedChange = {
+                                                    viewModel.onEvent(
+                                                            ClientManagementContract.Event
+                                                                    .ToggleSortMode(it)
+                                                    )
+                                                }
+                                        )
                                     }
                                 }
 
