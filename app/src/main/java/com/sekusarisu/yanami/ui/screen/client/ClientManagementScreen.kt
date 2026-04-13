@@ -262,9 +262,21 @@ class ClientManagementScreen : Screen {
 
                                 Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                                        horizontalArrangement = Arrangement.SpaceEvenly,
                                         verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    Text(
+                                        text =
+                                            stringResource(
+                                                R.string.client_management_total_count,
+                                                displayedClients.size,
+                                                state.clients.size
+                                            ),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+
+                                    Spacer(modifier = Modifier.weight(1f))
+
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
                                                 text =
@@ -286,6 +298,9 @@ class ClientManagementScreen : Screen {
                                                 enabled = !state.isSortMode
                                         )
                                     }
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
                                                 text =
