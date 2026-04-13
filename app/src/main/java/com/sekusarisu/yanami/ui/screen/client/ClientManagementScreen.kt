@@ -6,7 +6,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,13 +31,14 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.InstallDesktop
-import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Terminal
-import androidx.compose.material.icons.filled.Timelapse
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ChipColors
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -552,7 +552,10 @@ private fun ClientCard(
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
 
-    OutlinedCard(modifier = modifier.fillMaxWidth()) {
+    OutlinedCard(
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer),
+        modifier = modifier.fillMaxWidth()
+    ) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             val expiryStatus = client.calculateExpiryStatus()
             val secondaryInfo =
@@ -599,6 +602,7 @@ private fun ClientCard(
             ) {
                 if (client.ipv4.isNotBlank()) {
                     AssistChip(
+                            colors = AssistChipDefaults.assistChipColors(MaterialTheme.colorScheme.primaryContainer),
                             onClick = {
                                 clipboard.setText(AnnotatedString(client.ipv4))
                                 Toast.makeText(
@@ -622,6 +626,7 @@ private fun ClientCard(
                 }
                 if (client.ipv6.isNotBlank()) {
                     AssistChip(
+                            colors = AssistChipDefaults.assistChipColors(MaterialTheme.colorScheme.primaryContainer),
                             onClick = {
                                 clipboard.setText(AnnotatedString(client.ipv6))
                                 Toast.makeText(
