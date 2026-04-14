@@ -3,6 +3,7 @@ package com.sekusarisu.yanami.ui.screen.terminal
 import android.util.Log
 import cafe.adriel.voyager.core.model.screenModelScope
 import com.sekusarisu.yanami.data.local.preferences.UserPreferencesRepository
+import com.sekusarisu.yanami.data.remote.applyAuth
 import com.sekusarisu.yanami.data.remote.SessionManager
 import com.sekusarisu.yanami.domain.model.TerminalSnippet
 import com.sekusarisu.yanami.domain.model.AuthType
@@ -302,13 +303,7 @@ class SshTerminalViewModel(
                                     port = port,
                                     path = wsPath,
                                     request = {
-                                        when (authType) {
-                                            AuthType.API_KEY ->
-                                                    header("Authorization", "Bearer $sessionToken")
-                                            AuthType.PASSWORD ->
-                                                    header("Cookie", "session_token=$sessionToken")
-                                            AuthType.GUEST -> {}
-                                        }
+                                        applyAuth(sessionToken, authType)
                                         header("Origin", origin)
                                     },
                                     block = wsBlock
@@ -319,13 +314,7 @@ class SshTerminalViewModel(
                                     port = port,
                                     path = wsPath,
                                     request = {
-                                        when (authType) {
-                                            AuthType.API_KEY ->
-                                                    header("Authorization", "Bearer $sessionToken")
-                                            AuthType.PASSWORD ->
-                                                    header("Cookie", "session_token=$sessionToken")
-                                            AuthType.GUEST -> {}
-                                        }
+                                        applyAuth(sessionToken, authType)
                                         header("Origin", origin)
                                     },
                                     block = wsBlock

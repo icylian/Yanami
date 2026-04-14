@@ -7,7 +7,6 @@ import com.sekusarisu.yanami.data.remote.dto.ClientTokenDto
 import com.sekusarisu.yanami.data.remote.dto.ManagedClientDto
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
-import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -139,11 +138,10 @@ class KomariAdminClientService(private val httpClient: HttpClient) {
             sessionToken: String,
             authType: AuthType
     ) {
-        when (authType) {
-            AuthType.API_KEY -> header("Authorization", "Bearer $sessionToken")
-            AuthType.PASSWORD -> header("Cookie", "session_token=$sessionToken")
-            AuthType.GUEST -> throw IllegalStateException("游客模式不支持 Client 管理")
+        if (authType == AuthType.GUEST) {
+            throw IllegalStateException("游客模式不支持 Client 管理")
         }
+        applyAuth(sessionToken, authType)
     }
 
     private suspend fun <T> parseData(response: HttpResponse, serializer: KSerializer<T>): T {

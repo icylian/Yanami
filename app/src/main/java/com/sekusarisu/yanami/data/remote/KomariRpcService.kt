@@ -126,13 +126,7 @@ class KomariRpcService(private val httpClient: HttpClient) {
         val url = baseUrl.trimEnd('/') + "/api/recent/$uuid"
         val response =
                 httpClient.get(url) {
-                    if (sessionToken.isNotBlank()) {
-                        when (authType) {
-                            AuthType.API_KEY -> header("Authorization", "Bearer $sessionToken")
-                            AuthType.PASSWORD -> header("Cookie", "session_token=$sessionToken")
-                            AuthType.GUEST -> {}
-                        }
-                    }
+                    applyAuth(sessionToken, authType)
                 }
         val responseText = response.bodyAsText()
         val parsed = json.parseToJsonElement(responseText).jsonObject
@@ -307,15 +301,7 @@ class KomariRpcService(private val httpClient: HttpClient) {
                             port = port,
                             path = wsPath,
                             request = {
-                                if (sessionToken.isNotBlank()) {
-                                    when (authType) {
-                                        AuthType.API_KEY ->
-                                                header("Authorization", "Bearer $sessionToken")
-                                        AuthType.PASSWORD ->
-                                                header("Cookie", "session_token=$sessionToken")
-                                        AuthType.GUEST -> {}
-                                    }
-                                }
+                                applyAuth(sessionToken, authType)
                                 header("Origin", origin)
                             },
                             block = wsBlock
@@ -326,15 +312,7 @@ class KomariRpcService(private val httpClient: HttpClient) {
                             port = port,
                             path = wsPath,
                             request = {
-                                if (sessionToken.isNotBlank()) {
-                                    when (authType) {
-                                        AuthType.API_KEY ->
-                                                header("Authorization", "Bearer $sessionToken")
-                                        AuthType.PASSWORD ->
-                                                header("Cookie", "session_token=$sessionToken")
-                                        AuthType.GUEST -> {}
-                                    }
-                                }
+                                applyAuth(sessionToken, authType)
                                 header("Origin", origin)
                             },
                             block = wsBlock
@@ -373,13 +351,7 @@ class KomariRpcService(private val httpClient: HttpClient) {
         val response =
                 httpClient.post(url) {
                     contentType(ContentType.Application.Json)
-                    if (sessionToken.isNotBlank()) {
-                        when (authType) {
-                            AuthType.API_KEY -> header("Authorization", "Bearer $sessionToken")
-                            AuthType.PASSWORD -> header("Cookie", "session_token=$sessionToken")
-                            AuthType.GUEST -> {}
-                        }
-                    }
+                    applyAuth(sessionToken, authType)
                     setBody(requestBody.toString())
                 }
 
