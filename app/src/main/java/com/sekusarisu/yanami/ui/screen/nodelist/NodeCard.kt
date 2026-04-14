@@ -73,14 +73,14 @@ fun NodeCard(node: Node, onClick: () -> Unit, isExpanded: Boolean, modifier: Mod
             }
 
             if (!node.isOnline) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                        text = node.os,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                )
+//                Spacer(modifier = Modifier.height(4.dp))
+//                Text(
+//                        text = node.os,
+//                        style = MaterialTheme.typography.bodySmall,
+//                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                        maxLines = 1,
+//                        overflow = TextOverflow.Ellipsis
+//                )
                 return@Card
             }
 
