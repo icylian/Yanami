@@ -1,6 +1,7 @@
 package com.sekusarisu.yanami.ui.screen.client
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -41,6 +42,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -57,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.sekusarisu.yanami.R
 import com.sekusarisu.yanami.domain.model.AdminPingTask
 import com.sekusarisu.yanami.domain.model.AdminPingTaskDraft
@@ -352,6 +355,7 @@ private fun TaskViewSection(
                     } else {
                         PingTaskCard(
                             task = task,
+                            clients = state.clients,
                             onEdit = {
                                 onEvent(PingTaskManagementContract.Event.EditClicked(task.id))
                             },
@@ -413,10 +417,13 @@ private fun ServerViewSection(
         }
 
         items(items = state.filteredClients, key = { it.uuid }) { client ->
-            val boundCount = state.tasks.count { task -> client.uuid in task.clients }
+            val boundTaskLabels =
+                state.tasks
+                    .filter { task -> client.uuid in task.clients }
+                    .map { task -> task.name }
             ServerBindingCard(
                 client = client,
-                boundCount = boundCount,
+                boundTaskLabels = boundTaskLabels,
                 onEdit = {
                     onEvent(
                         PingTaskManagementContract.Event.EditServerBindingClicked(client.uuid)
@@ -434,10 +441,14 @@ private fun ServerViewSection(
 @Composable
 private fun PingTaskCard(
     task: AdminPingTask,
+    clients: List<ManagedClient>,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val clientNameMap = clients.associateBy({ it.uuid }, { it.name.ifBlank { it.uuid } })
+    val clientLabels = task.clients.map { uuid -> clientNameMap[uuid] ?: uuid }
+
     OutlinedCard(
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer),
         modifier = modifier.fillMaxWidth()
@@ -463,33 +474,32 @@ private fun PingTaskCard(
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                AssistChip(
-                    colors =
-                        AssistChipDefaults.assistChipColors(
-                            MaterialTheme.colorScheme.primaryContainer
-                        ),
-                    onClick = {},
-                    label = { Text(task.type.toLabel()) }
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                AssistChip(
-                    colors =
-                        AssistChipDefaults.assistChipColors(
-                            MaterialTheme.colorScheme.primaryContainer
-                        ),
-                    onClick = {},
-                    label = { Text("${task.interval} s") }
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PingTaskBadge(text = task.type.toLabel())
+                    PingTaskBadge(text = "${task.interval} s")
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text =
-                    stringResource(R.string.ping_task_management_clients) + ": " + task.clients.size,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState(), true),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                clientLabels.forEach { label ->
+                    AssistChip(
+                        colors =
+                            AssistChipDefaults.assistChipColors(
+                                MaterialTheme.colorScheme.primaryContainer
+                            ),
+                        onClick = {},
+                        label = { Text(label) }
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -512,7 +522,7 @@ private fun PingTaskCard(
 @Composable
 private fun ServerBindingCard(
     client: ManagedClient,
-    boundCount: Int,
+    boundTaskLabels: List<String>,
     onEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -555,11 +565,23 @@ private fun ServerBindingCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text =
-                    stringResource(R.string.ping_task_management_server_bound_count, boundCount),
-                style = MaterialTheme.typography.bodyMedium
-            )
+            if (boundTaskLabels.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState(), true),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    boundTaskLabels.forEach { label ->
+                        AssistChip(
+                            colors =
+                                AssistChipDefaults.assistChipColors(
+                                    MaterialTheme.colorScheme.primaryContainer
+                                ),
+                            onClick = {},
+                            label = { Text(label) }
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -846,6 +868,22 @@ private fun ErrorPane(
                 Text(stringResource(R.string.action_retry))
             }
         }
+    }
+}
+
+@Composable
+private fun PingTaskBadge(text: String, modifier: Modifier = Modifier) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        modifier = modifier
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
     }
 }
 
