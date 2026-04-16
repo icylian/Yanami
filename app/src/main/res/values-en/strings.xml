@@ -203,6 +203,16 @@
     <string name="ping_task_type_icmp">ICMP</string>
     <string name="ping_task_type_tcp">TCP</string>
     <string name="ping_task_type_http">HTTP</string>
+    <string name="ping_task_management_task_view">Task View</string>
+    <string name="ping_task_management_server_view">Server View</string>
+    <string name="ping_task_management_server_search">Search servers…</string>
+    <string name="ping_task_management_server_total_count">Showing %1$d / %2$d servers</string>
+    <string name="ping_task_management_server_empty">No matching servers</string>
+    <string name="ping_task_management_server_bound_count">Bound to %1$d latency monitor tasks</string>
+    <string name="ping_task_management_server_binding_title">Latency Monitor Bindings: %1$s</string>
+    <string name="ping_task_management_server_binding_hint">Select the latency monitor tasks to bind to this server.</string>
+    <string name="ping_task_management_server_binding_saved">Saved latency monitor bindings for \"%1$s\"</string>
+    <string name="ping_task_management_server_binding_save_failed">Failed to save server bindings: %1$s</string>
 
     <!-- Node Detail -->
     <string name="node_detail_title">Node Detail</string>

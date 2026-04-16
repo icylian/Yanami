@@ -195,16 +195,23 @@ class ClientManagementScreen : Screen {
                                 }
                             }
                             NodeAdminSection.PING -> {
-                                IconButton(
-                                    onClick = soundClick {
-                                        pingViewModel.onEvent(PingTaskManagementContract.Event.AddClicked)
-                                    }
+                                if (
+                                    pingState.currentView ==
+                                        PingTaskManagementContract.ContentView.TASKS
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription =
-                                            stringResource(R.string.ping_task_management_create)
-                                    )
+                                    IconButton(
+                                        onClick = soundClick {
+                                            pingViewModel.onEvent(
+                                                PingTaskManagementContract.Event.AddClicked
+                                            )
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription =
+                                                stringResource(R.string.ping_task_management_create)
+                                        )
+                                    }
                                 }
                             }
                         }

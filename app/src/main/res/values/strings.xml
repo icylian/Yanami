@@ -203,6 +203,16 @@
     <string name="ping_task_type_icmp">ICMP</string>
     <string name="ping_task_type_tcp">TCP</string>
     <string name="ping_task_type_http">HTTP</string>
+    <string name="ping_task_management_task_view">任务视图</string>
+    <string name="ping_task_management_server_view">服务器视图</string>
+    <string name="ping_task_management_server_search">搜索服务器…</string>
+    <string name="ping_task_management_server_total_count">已显示 %1$d / %2$d 台服务器</string>
+    <string name="ping_task_management_server_empty">没有匹配的服务器</string>
+    <string name="ping_task_management_server_bound_count">已绑定 %1$d 个延迟监测任务</string>
+    <string name="ping_task_management_server_binding_title">绑定延迟监测：%1$s</string>
+    <string name="ping_task_management_server_binding_hint">选择需要绑定到该服务器的延迟监测任务</string>
+    <string name="ping_task_management_server_binding_saved">已保存「%1$s」的延迟监测绑定</string>
+    <string name="ping_task_management_server_binding_save_failed">保存服务器绑定失败: %1$s</string>
 
     <!-- 节点详情 -->
     <string name="node_detail_title">节点详情</string>

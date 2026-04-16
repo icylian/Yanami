@@ -203,6 +203,16 @@
     <string name="ping_task_type_icmp">ICMP</string>
     <string name="ping_task_type_tcp">TCP</string>
     <string name="ping_task_type_http">HTTP</string>
+    <string name="ping_task_management_task_view">タスク表示</string>
+    <string name="ping_task_management_server_view">サーバー表示</string>
+    <string name="ping_task_management_server_search">サーバーを検索…</string>
+    <string name="ping_task_management_server_total_count">%1$d / %2$d 台を表示中</string>
+    <string name="ping_task_management_server_empty">一致するサーバーがありません</string>
+    <string name="ping_task_management_server_bound_count">%1$d 個の遅延監視タスクを紐付け済み</string>
+    <string name="ping_task_management_server_binding_title">遅延監視の紐付け: %1$s</string>
+    <string name="ping_task_management_server_binding_hint">このサーバーに紐付ける遅延監視タスクを選択してください</string>
+    <string name="ping_task_management_server_binding_saved">「%1$s」の遅延監視紐付けを保存しました</string>
+    <string name="ping_task_management_server_binding_save_failed">サーバー紐付けの保存に失敗しました: %1$s</string>
 
     <!-- サーバー詳細 -->
     <string name="node_detail_title">サーバー詳細</string>

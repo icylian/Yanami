@@ -42,6 +42,20 @@ class PingTaskManagementViewModel(
                 setState { copy(searchQuery = event.query) }
                 applyFilters()
             }
+            is PingTaskManagementContract.Event.ViewChanged -> {
+                setState {
+                    copy(
+                        currentView = event.view,
+                        isSortMode =
+                            if (event.view == PingTaskManagementContract.ContentView.TASKS) {
+                                isSortMode
+                            } else {
+                                false
+                            }
+                    )
+                }
+                applyFilters()
+            }
             is PingTaskManagementContract.Event.TypeFilterChanged -> {
                 setState { copy(selectedType = event.type) }
                 applyFilters()
@@ -91,6 +105,24 @@ class PingTaskManagementViewModel(
                 setState { copy(pendingDeleteTask = null) }
             }
             is PingTaskManagementContract.Event.ConfirmDelete -> deletePendingTask()
+            is PingTaskManagementContract.Event.EditServerBindingClicked -> {
+                openServerBindingEditor(event.uuid)
+            }
+            is PingTaskManagementContract.Event.ToggleServerTask -> {
+                updateServerBindingEditor {
+                    val nextSelection =
+                        selectedTaskIds.toMutableSet().apply {
+                            if (!add(event.id)) {
+                                remove(event.id)
+                            }
+                        }
+                    copy(selectedTaskIds = nextSelection)
+                }
+            }
+            is PingTaskManagementContract.Event.DismissServerBinding -> {
+                setState { copy(serverBindingEditor = null) }
+            }
+            is PingTaskManagementContract.Event.SaveServerBinding -> saveServerBinding()
             is PingTaskManagementContract.Event.CommitReorder -> commitReorder(event.orderedIds)
             is PingTaskManagementContract.Event.MoveUpClicked -> moveTask(event.id, -1)
             is PingTaskManagementContract.Event.MoveDownClicked -> moveTask(event.id, 1)
@@ -197,6 +229,21 @@ class PingTaskManagementViewModel(
         }
     }
 
+    private fun openServerBindingEditor(uuid: String) {
+        val client = currentState.clients.firstOrNull { it.uuid == uuid } ?: return
+        val selectedTaskIds =
+            currentState.tasks.filter { task -> uuid in task.clients }.map { it.id }.toSet()
+        setState {
+            copy(
+                serverBindingEditor =
+                    PingTaskManagementContract.ServerBindingEditorState(
+                        client = client,
+                        selectedTaskIds = selectedTaskIds
+                    )
+            )
+        }
+    }
+
     private fun toggleSortMode(enabled: Boolean) {
         if (enabled && (currentState.searchQuery.isNotBlank() || currentState.selectedType != null)) {
             sendEffect(
@@ -214,6 +261,15 @@ class PingTaskManagementViewModel(
     ) {
         val editor = currentState.editor ?: return
         setState { copy(editor = editor.reducer()) }
+    }
+
+    private fun updateServerBindingEditor(
+        reducer:
+            PingTaskManagementContract.ServerBindingEditorState.() ->
+                PingTaskManagementContract.ServerBindingEditorState
+    ) {
+        val editor = currentState.serverBindingEditor ?: return
+        setState { copy(serverBindingEditor = editor.reducer()) }
     }
 
     private fun saveEditor() {
@@ -307,6 +363,73 @@ class PingTaskManagementViewModel(
         }
     }
 
+    private fun saveServerBinding() {
+        val editor = currentState.serverBindingEditor ?: return
+        val clientUuid = editor.client.uuid
+        val originalSelectedIds =
+            currentState.tasks.filter { task -> clientUuid in task.clients }.map { it.id }.toSet()
+        val nextSelectedIds = editor.selectedTaskIds
+        if (originalSelectedIds == nextSelectedIds) {
+            setState { copy(serverBindingEditor = null) }
+            return
+        }
+
+        val updatedTasks =
+            currentState.tasks.mapNotNull { task ->
+                val shouldContain = task.id in nextSelectedIds
+                val currentlyContains = clientUuid in task.clients
+                if (shouldContain == currentlyContains) {
+                    null
+                } else {
+                    task.copy(
+                        clients =
+                            if (shouldContain) {
+                                (task.clients + clientUuid).distinct().sorted()
+                            } else {
+                                task.clients.filterNot { it == clientUuid }
+                            }
+                    )
+                }
+            }
+
+        setState { copy(isSaving = true) }
+        screenModelScope.launch {
+            withServerSession(
+                onAuthError = ::handleSessionExpired,
+                onError = { e ->
+                    setState { copy(isSaving = false) }
+                    sendEffect(
+                        PingTaskManagementContract.Effect.ShowToast(
+                            context.getString(
+                                R.string.ping_task_management_server_binding_save_failed,
+                                e.message
+                            )
+                        )
+                    )
+                }
+            ) { server, sessionToken ->
+                if (updatedTasks.isNotEmpty()) {
+                    pingTaskRepository.updatePingTasks(
+                        baseUrl = server.baseUrl,
+                        sessionToken = sessionToken,
+                        authType = server.authType,
+                        tasks = updatedTasks
+                    )
+                }
+                setState { copy(isSaving = false, serverBindingEditor = null) }
+                sendEffect(
+                    PingTaskManagementContract.Effect.ShowToast(
+                        context.getString(
+                            R.string.ping_task_management_server_binding_saved,
+                            editor.client.name.ifBlank { editor.client.uuid }
+                        )
+                    )
+                )
+                refreshTasks()
+            }
+        }
+    }
+
     private fun commitReorder(orderedIds: List<Int>) {
         val currentTasks = currentState.tasks
         val currentOrder = currentTasks.map { it.id }
@@ -393,6 +516,7 @@ class PingTaskManagementViewModel(
             copy(
                 tasks = tasks,
                 clients = clients,
+                filteredClients = clients,
                 serverName = server.name
             )
         }
@@ -402,7 +526,7 @@ class PingTaskManagementViewModel(
     private fun applyFilters() {
         val state = currentState
         val query = state.searchQuery.trim().lowercase()
-        val filtered =
+        val filteredTasks =
             state.tasks.filter { task ->
                 val matchesQuery =
                     query.isBlank() ||
@@ -413,7 +537,22 @@ class PingTaskManagementViewModel(
                 val matchesType = state.selectedType == null || task.type == state.selectedType
                 matchesQuery && matchesType
             }
-        setState { copy(filteredTasks = filtered) }
+        val filteredClients =
+            state.clients.filter { client ->
+                query.isBlank() ||
+                    client.name.lowercase().contains(query) ||
+                    client.group.lowercase().contains(query) ||
+                    client.region.lowercase().contains(query) ||
+                    client.os.lowercase().contains(query) ||
+                    client.tags.lowercase().contains(query) ||
+                    client.remark.lowercase().contains(query)
+            }
+        setState {
+            copy(
+                filteredTasks = filteredTasks,
+                filteredClients = filteredClients
+            )
+        }
     }
 
     private suspend fun withServerSession(

@@ -18,19 +18,32 @@ object PingTaskManagementContract {
         val tasks: List<AdminPingTask> = emptyList(),
         val filteredTasks: List<AdminPingTask> = emptyList(),
         val clients: List<ManagedClient> = emptyList(),
+        val filteredClients: List<ManagedClient> = emptyList(),
         val searchQuery: String = "",
         val selectedType: PingTaskType? = null,
         val isSortMode: Boolean = false,
+        val currentView: ContentView = ContentView.TASKS,
         val editor: EditorState? = null,
+        val serverBindingEditor: ServerBindingEditorState? = null,
         val pendingDeleteTask: AdminPingTask? = null,
         val error: String? = null,
         val serverName: String = ""
     ) : UiState
 
+    enum class ContentView {
+        TASKS,
+        SERVERS
+    }
+
     data class EditorState(
         val mode: EditorMode,
         val taskId: Int? = null,
         val draft: AdminPingTaskDraft = AdminPingTaskDraft()
+    )
+
+    data class ServerBindingEditorState(
+        val client: ManagedClient,
+        val selectedTaskIds: Set<Int> = emptySet()
     )
 
     enum class EditorMode {
@@ -43,6 +56,7 @@ object PingTaskManagementContract {
         data object Refresh : Event
         data object Retry : Event
         data class SearchChanged(val query: String) : Event
+        data class ViewChanged(val view: ContentView) : Event
         data class TypeFilterChanged(val type: PingTaskType?) : Event
         data class ToggleSortMode(val enabled: Boolean) : Event
         data object AddClicked : Event
@@ -57,6 +71,10 @@ object PingTaskManagementContract {
         data class DeleteClicked(val id: Int) : Event
         data object DismissDelete : Event
         data object ConfirmDelete : Event
+        data class EditServerBindingClicked(val uuid: String) : Event
+        data class ToggleServerTask(val id: Int) : Event
+        data object DismissServerBinding : Event
+        data object SaveServerBinding : Event
         data class CommitReorder(val orderedIds: List<Int>) : Event
         data class MoveUpClicked(val id: Int) : Event
         data class MoveDownClicked(val id: Int) : Event
