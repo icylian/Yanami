@@ -14,6 +14,8 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import java.net.URI
+import kotlin.math.min
+import kotlin.random.Random
 
 internal data class KomariWebSocketEndpoint(
         val host: String,
@@ -102,11 +104,15 @@ internal suspend fun HttpClient.runKomariWebSocketLifecycle(
         authType: AuthType,
         loggerTag: String,
         reconnectDelayMs: Long? = null,
+        maxReconnectDelayMs: Long? = reconnectDelayMs,
+        reconnectJitterMs: Long = 0,
         reconnectOnNormalClose: Boolean = false,
         block: suspend DefaultClientWebSocketSession.() -> Unit
 ) {
+    var reconnectAttempt = 0
     while (currentCoroutineContext().isActive) {
         var shouldReconnect = false
+        var nextReconnectDelayMs: Long? = null
         try {
             Log.d(loggerTag, "WebSocket connecting to ${endpoint.displayUrl}")
             connectKomariWebSocket(endpoint, sessionToken, authType, block)
@@ -114,9 +120,17 @@ internal suspend fun HttpClient.runKomariWebSocketLifecycle(
             if (!shouldReconnect) {
                 return
             }
+            reconnectAttempt = 0
+            nextReconnectDelayMs =
+                    computeReconnectDelayMillis(
+                            baseDelayMs = reconnectDelayMs,
+                            maxDelayMs = maxReconnectDelayMs,
+                            attempt = reconnectAttempt,
+                            jitterMs = reconnectJitterMs
+                    )
             Log.w(
                     loggerTag,
-                    "WebSocket closed, reconnecting in ${reconnectDelayMs}ms..."
+                    "WebSocket closed, reconnecting in ${nextReconnectDelayMs}ms..."
             )
         } catch (e: CancellationException) {
             throw e
@@ -129,14 +143,46 @@ internal suspend fun HttpClient.runKomariWebSocketLifecycle(
                 throw e
             }
             shouldReconnect = true
-            Log.w(loggerTag, "WebSocket error: ${e.message}, reconnecting in ${reconnectDelayMs}ms...")
+            nextReconnectDelayMs =
+                    computeReconnectDelayMillis(
+                            baseDelayMs = reconnectDelayMs,
+                            maxDelayMs = maxReconnectDelayMs,
+                            attempt = reconnectAttempt,
+                            jitterMs = reconnectJitterMs
+                    )
+            Log.w(
+                    loggerTag,
+                    "WebSocket error: ${e.message}, reconnecting in ${nextReconnectDelayMs}ms..."
+            )
         }
 
         if (!shouldReconnect) {
             return
         }
-        delay(reconnectDelayMs ?: return)
+        reconnectAttempt = (reconnectAttempt + 1).coerceAtMost(30)
+        delay(nextReconnectDelayMs ?: return)
     }
+}
+
+private fun computeReconnectDelayMillis(
+        baseDelayMs: Long?,
+        maxDelayMs: Long?,
+        attempt: Int,
+        jitterMs: Long
+): Long? {
+    val safeBaseDelayMs = baseDelayMs ?: return null
+    val safeMaxDelayMs = maxOf(maxDelayMs ?: safeBaseDelayMs, safeBaseDelayMs)
+    val cappedAttempt = attempt.coerceAtMost(10)
+    val exponentialDelayMs =
+            (safeBaseDelayMs.toDouble() * (1 shl cappedAttempt)).toLong().coerceAtLeast(safeBaseDelayMs)
+    val boundedDelayMs = min(safeMaxDelayMs, exponentialDelayMs)
+    val jitterDelayMs =
+            if (jitterMs > 0) {
+                Random.nextLong(until = jitterMs + 1)
+            } else {
+                0L
+            }
+    return boundedDelayMs + jitterDelayMs
 }
 
 internal fun isKomariWebSocketAuthException(e: Exception): Boolean {

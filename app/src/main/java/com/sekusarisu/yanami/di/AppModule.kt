@@ -37,6 +37,7 @@ import com.sekusarisu.yanami.ui.screen.terminal.SshTerminalViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.websocket.WebSockets
@@ -65,6 +66,11 @@ val appModule = module {
                 )
             }
             install(WebSockets)
+            install(HttpTimeout) {
+                requestTimeoutMillis = 15_000
+                connectTimeoutMillis = 10_000
+                socketTimeoutMillis = 15_000
+            }
             install(Logging) {
                 level = if (BuildConfig.DEBUG) LogLevel.BODY else LogLevel.NONE
             }

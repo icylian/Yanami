@@ -90,6 +90,22 @@ class NodeListScreen : Screen {
             }
         }
 
+        val navigateBack = remember(navigator) {
+            {
+                navigator.pop()
+                Unit
+            }
+        }
+        val manageClients = remember(viewModel) {
+            { viewModel.onEvent(NodeListContract.Event.ManageClientsClicked) }
+        }
+        val toggleExpand = remember {
+            {
+                isAllExpanded = !isAllExpanded
+                Unit
+            }
+        }
+
         LaunchedEffect(Unit) {
             viewModel.effect.collect { effect ->
                 when (effect) {
@@ -123,11 +139,9 @@ class NodeListScreen : Screen {
                 state = state,
                 isAllExpanded = isAllExpanded,
                 isTabletLandscape = adaptiveInfo.isTabletLandscape,
-                onBackClick = soundClick { navigator.pop() },
-                onManageClientsClick = soundClick {
-                    viewModel.onEvent(NodeListContract.Event.ManageClientsClicked)
-                },
-                onToggleExpandClick = soundClick { isAllExpanded = !isAllExpanded },
+                onBackClick = soundClick(navigateBack),
+                onManageClientsClick = soundClick(manageClients),
+                onToggleExpandClick = soundClick(toggleExpand),
                 onRefresh = { viewModel.onEvent(NodeListContract.Event.Refresh) },
                 onRetry = { viewModel.onEvent(NodeListContract.Event.Retry) },
                 onEvent = viewModel::onEvent
@@ -340,9 +354,10 @@ private fun NodeListContent(
                     val onNodeClick = remember(node.uuid, onEvent) {
                         { onEvent(NodeListContract.Event.NodeClicked(node.uuid)) }
                     }
+                    val onNodeCardClick = soundClick(onNodeClick)
                     NodeCard(
                             node = node,
-                            onClick = onNodeClick,
+                            onClick = onNodeCardClick,
                             isExpanded = isAllExpanded
                     )
                 }

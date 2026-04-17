@@ -32,12 +32,11 @@ import com.sekusarisu.yanami.domain.model.Node
 import com.sekusarisu.yanami.domain.model.calculateExpiryStatus
 import com.sekusarisu.yanami.domain.model.calculateTrafficLimitUsage
 import com.sekusarisu.yanami.ui.screen.ExpiryBadge
-import com.sekusarisu.yanami.ui.screen.soundClick
 
 @Composable
 fun NodeCard(node: Node, onClick: () -> Unit, isExpanded: Boolean, modifier: Modifier = Modifier) {
     Card(
-            onClick = soundClick { onClick() },
+            onClick = onClick,
             modifier = modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {

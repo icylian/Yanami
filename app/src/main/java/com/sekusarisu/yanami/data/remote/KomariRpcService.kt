@@ -21,13 +21,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 
 /**
  * Komari RPC 服务
@@ -62,13 +66,12 @@ class KomariRpcService(private val httpClient: HttpClient) {
             sessionToken: String,
             authType: AuthType = AuthType.PASSWORD
     ): Map<String, NodeInfoDto> {
-        val responseText = callRpcHttp(baseUrl, sessionToken, "common:getNodes", authType = authType)
-        val parsed = json.parseToJsonElement(responseText).jsonObject
-        checkRpcError(parsed)
-        val result = parsed["result"]?.jsonObject ?: return emptyMap()
-        return result.mapValues { (_, value) ->
-            json.decodeFromJsonElement(NodeInfoDto.serializer(), value)
-        }
+        val envelope = callRpcHttp(baseUrl, sessionToken, "common:getNodes", authType = authType)
+        return decodeOptionalRpcResult(
+                envelope,
+                MapSerializer(String.serializer(), NodeInfoDto.serializer()),
+                emptyMap()
+        )
     }
 
     /**
@@ -80,14 +83,13 @@ class KomariRpcService(private val httpClient: HttpClient) {
             sessionToken: String,
             authType: AuthType = AuthType.PASSWORD
     ): Map<String, NodeStatusDto> {
-        val responseText =
+        val envelope =
                 callRpcHttp(baseUrl, sessionToken, "common:getNodesLatestStatus", authType = authType)
-        val parsed = json.parseToJsonElement(responseText).jsonObject
-        checkRpcError(parsed)
-        val result = parsed["result"]?.jsonObject ?: return emptyMap()
-        return result.mapValues { (_, value) ->
-            json.decodeFromJsonElement(NodeStatusDto.serializer(), value)
-        }
+        return decodeOptionalRpcResult(
+                envelope,
+                MapSerializer(String.serializer(), NodeStatusDto.serializer()),
+                emptyMap()
+        )
     }
 
     /**
@@ -99,12 +101,10 @@ class KomariRpcService(private val httpClient: HttpClient) {
             sessionToken: String,
             authType: AuthType = AuthType.PASSWORD
     ): String {
-        val responseText = callRpcHttp(baseUrl, sessionToken, "common:getVersion", authType = authType)
-        val parsed = json.parseToJsonElement(responseText).jsonObject
-        checkRpcError(parsed)
-        val result = parsed["result"]?.jsonObject
-        return result?.get("version")?.jsonPrimitive?.content
-                ?: throw RpcException(-1, "Invalid version response")
+        val envelope =
+                callRpcHttp(baseUrl, sessionToken, "common:getVersion", authType = authType)
+        val result = decodeRpcResult(envelope, RpcVersionResult.serializer())
+        return result.version.ifBlank { throw RpcException(-1, "Invalid version response") }
     }
 
     /**
@@ -125,11 +125,7 @@ class KomariRpcService(private val httpClient: HttpClient) {
                     applyAuth(sessionToken, authType)
                 }
         val responseText = response.bodyAsText()
-        val parsed = json.parseToJsonElement(responseText).jsonObject
-        val data = parsed["data"] ?: return emptyList()
-        return data.jsonArray.map {
-            json.decodeFromJsonElement(RecentStatusItemDto.serializer(), it)
-        }
+        return json.decodeFromString(RecentStatusResponse.serializer(), responseText).data
     }
 
     // ─── WebSocket RPC（通过 HTTP Upgrade 建立 WebSocket 连接）───
@@ -222,45 +218,38 @@ class KomariRpcService(private val httpClient: HttpClient) {
                             if (frame is Frame.Text) {
                                 val text = frame.readText()
                                 try {
-                                    val parsed = json.parseToJsonElement(text).jsonObject
-                                    val idStr = parsed["id"]?.jsonPrimitive?.content ?: continue
+                                    val envelope = decodeRpcEnvelope(text)
+                                    val idStr = rpcEnvelopeId(envelope) ?: continue
 
                                     if (idStr == reqStatusId.toString()) {
-                                        val result = parsed["result"]?.jsonObject
-                                        if (result != null) {
-                                            val statusMap =
-                                                    result.mapValues { (_, v) ->
-                                                        json.decodeFromJsonElement(
-                                                                NodeStatusDto.serializer(),
-                                                                v
-                                                        )
-                                                    }
+                                        val statusMap =
+                                                decodeOptionalRpcResult(
+                                                        envelope,
+                                                        MapSerializer(
+                                                                String.serializer(),
+                                                                NodeStatusDto.serializer()
+                                                        ),
+                                                        emptyMap()
+                                                )
+                                        if (statusMap.isNotEmpty()) {
                                             send(KomariWsEvent.Status(statusMap))
                                         }
                                         receivedCount++
                                     } else if (idStr == reqLoadId.toString()) {
-                                        checkRpcError(parsed)
-                                        val result = parsed["result"]
-                                        if (result != null) {
-                                            val dto =
-                                                    json.decodeFromJsonElement(
-                                                            LoadRecordsResponseDto.serializer(),
-                                                            result
-                                                    )
-                                            send(KomariWsEvent.LoadRecords(dto))
-                                        }
+                                        val dto =
+                                                decodeRpcResult(
+                                                        envelope,
+                                                        LoadRecordsResponseDto.serializer()
+                                                )
+                                        send(KomariWsEvent.LoadRecords(dto))
                                         receivedCount++
                                     } else if (idStr == reqPingId.toString()) {
-                                        checkRpcError(parsed)
-                                        val result = parsed["result"]
-                                        if (result != null) {
-                                            val dto =
-                                                    json.decodeFromJsonElement(
-                                                            PingRecordsResponseDto.serializer(),
-                                                            result
-                                                    )
-                                            send(KomariWsEvent.PingRecords(dto))
-                                        }
+                                        val dto =
+                                                decodeRpcResult(
+                                                        envelope,
+                                                        PingRecordsResponseDto.serializer()
+                                                )
+                                        send(KomariWsEvent.PingRecords(dto))
                                         receivedCount++
                                     }
                                 } catch (e: Exception) {
@@ -280,6 +269,8 @@ class KomariRpcService(private val httpClient: HttpClient) {
                 authType = authType,
                 loggerTag = TAG,
                 reconnectDelayMs = 5_000L,
+                maxReconnectDelayMs = 30_000L,
+                reconnectJitterMs = 1_000L,
                 reconnectOnNormalClose = true,
                 block = wsBlock
         )
@@ -295,7 +286,7 @@ class KomariRpcService(private val httpClient: HttpClient) {
             method: String,
             params: JsonObject? = null,
             authType: AuthType = AuthType.PASSWORD
-    ): String {
+    ): RpcEnvelope {
         val url = baseUrl.trimEnd('/') + "/api/rpc2"
         val requestBody = buildJsonObject {
             put("jsonrpc", "2.0")
@@ -311,19 +302,58 @@ class KomariRpcService(private val httpClient: HttpClient) {
                     setBody(requestBody.toString())
                 }
 
-        return response.bodyAsText()
+        return decodeRpcEnvelope(response.bodyAsText())
     }
 
-    private fun checkRpcError(json: JsonObject) {
-        val error = json["error"]
-        if (error != null && error.toString() != "null") {
-            val errorObj = error.jsonObject
-            val message = errorObj["message"]?.jsonPrimitive?.content ?: "Unknown RPC error"
-            val code = errorObj["code"]?.jsonPrimitive?.content?.toIntOrNull() ?: -1
-            throw RpcException(code, message)
-        }
+    private fun decodeRpcEnvelope(rawText: String): RpcEnvelope {
+        return json.decodeFromString(RpcEnvelope.serializer(), rawText)
+    }
+
+    private fun rpcEnvelopeId(envelope: RpcEnvelope): String? {
+        return envelope.id?.jsonPrimitive?.contentOrNull
+    }
+
+    private fun ensureNoRpcError(envelope: RpcEnvelope) {
+        val error = envelope.error ?: return
+        throw RpcException(error.code ?: -1, error.message ?: "Unknown RPC error")
+    }
+
+    private fun <T> decodeRpcResult(envelope: RpcEnvelope, serializer: KSerializer<T>): T {
+        ensureNoRpcError(envelope)
+        val result = envelope.result ?: throw RpcException(-1, "Missing RPC result")
+        return json.decodeFromJsonElement(serializer, result)
+    }
+
+    private fun <T> decodeOptionalRpcResult(
+            envelope: RpcEnvelope,
+            serializer: KSerializer<T>,
+            defaultValue: T
+    ): T {
+        ensureNoRpcError(envelope)
+        val result = envelope.result ?: return defaultValue
+        return json.decodeFromJsonElement(serializer, result)
     }
 }
+
+@Serializable
+private data class RpcEnvelope(
+        val jsonrpc: String? = null,
+        val id: JsonElement? = null,
+        val result: JsonElement? = null,
+        val error: RpcErrorPayload? = null
+)
+
+@Serializable
+private data class RpcErrorPayload(
+        val code: Int? = null,
+        val message: String? = null
+)
+
+@Serializable
+private data class RpcVersionResult(val version: String = "")
+
+@Serializable
+private data class RecentStatusResponse(val data: List<RecentStatusItemDto> = emptyList())
 
 /** RPC 调用异常 */
 class RpcException(val code: Int, override val message: String) :
