@@ -1,5 +1,6 @@
 package com.sekusarisu.yanami.ui.screen.nodedetail
 
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -106,7 +107,10 @@ internal fun PingTaskChart(
                                 zoomEnabled = false,
                                 initialZoom = Zoom.Content
                         ),
-                animationSpec = if (chartAnimationEnabled) tween(durationMillis = 500) else null,
+                animationSpec =
+                        if (chartAnimationEnabled) {
+                            tween(durationMillis = 300, easing = LinearEasing)
+                        } else null,
                 animateIn = chartAnimationEnabled
         )
     }
@@ -196,7 +200,10 @@ internal fun ChartCard(
                                     zoomEnabled = false,
                                     initialZoom = Zoom.Content
                             ),
-                    animationSpec = if (chartAnimationEnabled) tween(durationMillis = 500) else null,
+                    animationSpec =
+                            if (chartAnimationEnabled) {
+                                tween(durationMillis = 300, easing = LinearEasing)
+                            } else null,
                     animateIn = chartAnimationEnabled
             )
         } else {
@@ -296,7 +303,10 @@ internal fun ConnectionChartCard(
                                     zoomEnabled = false,
                                     initialZoom = Zoom.Content
                             ),
-                    animationSpec = if (chartAnimationEnabled) tween(durationMillis = 500) else null,
+                    animationSpec =
+                            if (chartAnimationEnabled) {
+                                tween(durationMillis = 300, easing = LinearEasing)
+                            } else null,
                     animateIn = chartAnimationEnabled
             )
         }
@@ -383,7 +393,10 @@ internal fun NetworkChartCard(
                                     zoomEnabled = false,
                                     initialZoom = Zoom.Content
                             ),
-                    animationSpec = if (chartAnimationEnabled) tween(durationMillis = 500) else null,
+                    animationSpec =
+                            if (chartAnimationEnabled) {
+                                tween(durationMillis = 300, easing = LinearEasing)
+                            } else null,
                     animateIn = chartAnimationEnabled
             )
         }

@@ -24,6 +24,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -45,6 +48,24 @@ internal fun NodeDetailContent(
     val loadRecords =
             if (state.selectedLoadHours == 0) state.realtimeLoadRecords else state.loadRecords
     val loadIsLoading = state.selectedLoadHours != 0 && state.isLoadRecordsLoading
+    val times by remember(loadRecords) { derivedStateOf { loadRecords.map { it.time } } }
+    val cpuData by remember(loadRecords) { derivedStateOf { loadRecords.map { it.cpu } } }
+    val ramData by remember(loadRecords) { derivedStateOf { loadRecords.map { it.ramPercent } } }
+    val netInData by remember(loadRecords) {
+        derivedStateOf { loadRecords.map { it.netIn.toDouble() } }
+    }
+    val netOutData by remember(loadRecords) {
+        derivedStateOf { loadRecords.map { it.netOut.toDouble() } }
+    }
+    val tcpData by remember(loadRecords) {
+        derivedStateOf { loadRecords.map { it.connections } }
+    }
+    val udpData by remember(loadRecords) {
+        derivedStateOf { loadRecords.map { it.connectionsUdp } }
+    }
+    val processData by remember(loadRecords) {
+        derivedStateOf { loadRecords.map { it.process.toDouble() } }
+    }
 
     AdaptiveContentPane(maxWidth = if (isTabletLandscape) 1440.dp else 920.dp) {
         LazyColumn(
@@ -92,14 +113,13 @@ internal fun NodeDetailContent(
                     }
                 }
             } else {
-                val times = loadRecords.map { it.time }
                 if (isTabletLandscape) {
                     item {
                         WideChartRow(
                                 first = {
                                     ChartCard(
                                             title = stringResource(R.string.node_detail_cpu_usage),
-                                            data = loadRecords.map { it.cpu },
+                                            data = cpuData,
                                             times = times,
                                             color = MaterialTheme.colorScheme.primary,
                                             suffix = "%",
@@ -109,7 +129,7 @@ internal fun NodeDetailContent(
                                 second = {
                                     ChartCard(
                                             title = stringResource(R.string.node_detail_ram),
-                                            data = loadRecords.map { it.ramPercent },
+                                            data = ramData,
                                             times = times,
                                             color = MaterialTheme.colorScheme.primary,
                                             suffix = "%",
@@ -123,8 +143,8 @@ internal fun NodeDetailContent(
                                 first = {
                                     NetworkChartCard(
                                             title = stringResource(R.string.node_detail_net_speed),
-                                            netInData = loadRecords.map { it.netIn.toDouble() },
-                                            netOutData = loadRecords.map { it.netOut.toDouble() },
+                                            netInData = netInData,
+                                            netOutData = netOutData,
                                             times = times,
                                             chartAnimationEnabled = chartAnimationEnabled
                                     )
@@ -132,8 +152,8 @@ internal fun NodeDetailContent(
                                 second = {
                                     ConnectionChartCard(
                                             title = stringResource(R.string.node_detail_connections),
-                                            tcpData = loadRecords.map { it.connections },
-                                            udpData = loadRecords.map { it.connectionsUdp },
+                                            tcpData = tcpData,
+                                            udpData = udpData,
                                             times = times,
                                             suffix = "",
                                             chartAnimationEnabled = chartAnimationEnabled
@@ -145,7 +165,7 @@ internal fun NodeDetailContent(
                         ChartSectionSurface {
                             ChartCard(
                                     title = stringResource(R.string.node_detail_process),
-                                    data = loadRecords.map { it.process.toDouble() },
+                                    data = processData,
                                     times = times,
                                     color = MaterialTheme.colorScheme.primary,
                                     suffix = "",
@@ -158,7 +178,7 @@ internal fun NodeDetailContent(
                         ChartSectionSurface {
                             ChartCard(
                                     title = stringResource(R.string.node_detail_cpu_usage),
-                                    data = loadRecords.map { it.cpu },
+                                    data = cpuData,
                                     times = times,
                                     color = MaterialTheme.colorScheme.primary,
                                     suffix = "%",
@@ -170,7 +190,7 @@ internal fun NodeDetailContent(
                         ChartSectionSurface {
                             ChartCard(
                                     title = stringResource(R.string.node_detail_ram),
-                                    data = loadRecords.map { it.ramPercent },
+                                    data = ramData,
                                     times = times,
                                     color = MaterialTheme.colorScheme.primary,
                                     suffix = "%",
@@ -182,8 +202,8 @@ internal fun NodeDetailContent(
                         ChartSectionSurface {
                             NetworkChartCard(
                                     title = stringResource(R.string.node_detail_net_speed),
-                                    netInData = loadRecords.map { it.netIn.toDouble() },
-                                    netOutData = loadRecords.map { it.netOut.toDouble() },
+                                    netInData = netInData,
+                                    netOutData = netOutData,
                                     times = times,
                                     chartAnimationEnabled = chartAnimationEnabled
                             )
@@ -193,8 +213,8 @@ internal fun NodeDetailContent(
                         ChartSectionSurface {
                             ConnectionChartCard(
                                     title = stringResource(R.string.node_detail_connections),
-                                    tcpData = loadRecords.map { it.connections },
-                                    udpData = loadRecords.map { it.connectionsUdp },
+                                    tcpData = tcpData,
+                                    udpData = udpData,
                                     times = times,
                                     suffix = "",
                                     chartAnimationEnabled = chartAnimationEnabled
@@ -205,7 +225,7 @@ internal fun NodeDetailContent(
                         ChartSectionSurface {
                             ChartCard(
                                     title = stringResource(R.string.node_detail_process),
-                                    data = loadRecords.map { it.process.toDouble() },
+                                    data = processData,
                                     times = times,
                                     color = MaterialTheme.colorScheme.primary,
                                     suffix = "",
