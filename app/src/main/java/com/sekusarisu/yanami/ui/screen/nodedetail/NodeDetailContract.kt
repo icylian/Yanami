@@ -1,9 +1,7 @@
 package com.sekusarisu.yanami.ui.screen.nodedetail
 
 import com.sekusarisu.yanami.domain.model.AuthType
-import com.sekusarisu.yanami.domain.model.LoadRecord
 import com.sekusarisu.yanami.domain.model.Node
-import com.sekusarisu.yanami.domain.model.PingRecord
 import com.sekusarisu.yanami.domain.model.PingTask
 import com.sekusarisu.yanami.mvi.UiEffect
 import com.sekusarisu.yanami.mvi.UiEvent
@@ -12,13 +10,29 @@ import com.sekusarisu.yanami.mvi.UiState
 /** 节点详情 — MVI 契约 */
 object NodeDetailContract {
 
+    data class LoadChartData(
+            val timeLabels: List<String> = emptyList(),
+            val cpuSeries: List<Double> = emptyList(),
+            val ramSeries: List<Double> = emptyList(),
+            val netInSeries: List<Double> = emptyList(),
+            val netOutSeries: List<Double> = emptyList(),
+            val tcpSeries: List<Int> = emptyList(),
+            val udpSeries: List<Int> = emptyList(),
+            val processSeries: List<Double> = emptyList()
+    )
+
+    data class PingChartData(
+            val values: List<Double> = emptyList(),
+            val times: List<String> = emptyList()
+    )
+
     data class State(
             val isLoading: Boolean = true,
             val node: Node? = null,
-            val loadRecords: List<LoadRecord> = emptyList(),
-            val realtimeLoadRecords: List<LoadRecord> = emptyList(),
+            val loadChartData: LoadChartData = LoadChartData(),
+            val realtimeLoadChartData: LoadChartData = LoadChartData(),
             val pingTasks: List<PingTask> = emptyList(),
-            val pingRecords: List<PingRecord> = emptyList(),
+            val pingChartByTaskId: Map<Int, PingChartData> = emptyMap(),
             val selectedLoadHours: Int = 0,
             val selectedPingHours: Int = 1,
             val isLoadRecordsLoading: Boolean = false,

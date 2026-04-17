@@ -1,5 +1,6 @@
 package com.sekusarisu.yanami.domain.model
 
+import androidx.compose.runtime.Immutable
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -12,6 +13,7 @@ import java.time.format.DateTimeFormatter
  *
  * 合并节点基本信息（common:getNodes）+ 实时状态（common:getNodesLatestStatus）。 仅保留 UI 层需要的字段。
  */
+@Immutable
 data class Node(
         val uuid: String,
         val name: String,
@@ -47,9 +49,16 @@ data class Node(
         val gpuName: String = "",
         val trafficLimit: Long = 0,
         val trafficLimitType: String = "",
-        val expiredAt: String? = null
+        val expiredAt: String? = null,
+        // Cache parsed expiry once when the model is created to avoid repeated exception-heavy parsing.
+        val expiryInstant: Instant? =
+                expiredAt
+                        ?.trim()
+                        ?.takeIf { it.isNotEmpty() }
+                        ?.let { parseNodeExpiryInstant(it, ZoneId.systemDefault()) }
 )
 
+@Immutable
 data class TrafficLimitUsage(
         val currentUsage: Long,
         val limit: Long,
@@ -57,6 +66,7 @@ data class TrafficLimitUsage(
         val usagePercent: Double
 )
 
+@Immutable
 data class NodeExpiryStatus(
         val expiryInstant: Instant,
         val remainingSeconds: Long,
@@ -93,11 +103,15 @@ fun Node.calculateExpiryStatus(
         now: Instant = Instant.now(),
         zoneId: ZoneId = ZoneId.systemDefault()
 ): NodeExpiryStatus? {
-        val raw = expiredAt?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-        val expiryInstant = parseNodeExpiryInstant(raw, zoneId) ?: return null
-        val remainingSeconds = expiryInstant.epochSecond - now.epochSecond
+        val parsedExpiryInstant =
+                expiryInstant
+                        ?: expiredAt?.trim()?.takeIf { it.isNotEmpty() }?.let {
+                                parseNodeExpiryInstant(it, zoneId)
+                        }
+                        ?: return null
+        val remainingSeconds = parsedExpiryInstant.epochSecond - now.epochSecond
         return NodeExpiryStatus(
-                expiryInstant = expiryInstant,
+                expiryInstant = parsedExpiryInstant,
                 remainingSeconds = remainingSeconds,
                 isExpired = remainingSeconds <= 0
         )

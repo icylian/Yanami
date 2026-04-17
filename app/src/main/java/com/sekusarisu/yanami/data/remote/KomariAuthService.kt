@@ -2,6 +2,7 @@ package com.sekusarisu.yanami.data.remote
 
 import android.util.Log
 import com.sekusarisu.yanami.BuildConfig
+import com.sekusarisu.yanami.domain.model.AuthType
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -109,7 +110,7 @@ class KomariAuthService(private val httpClient: HttpClient) {
             val response =
                     httpClient.post(url) {
                         contentType(ContentType.Application.Json)
-                        header("Authorization", "Bearer $apiKey")
+                        applyAuth(apiKey, AuthType.API_KEY)
                         header("User-Agent", "Yanami/${BuildConfig.VERSION_NAME}")
                         setBody(rpcRequest.toString())
                     }
@@ -145,7 +146,7 @@ class KomariAuthService(private val httpClient: HttpClient) {
             val response =
                     httpClient.post(url) {
                         contentType(ContentType.Application.Json)
-                        header("Cookie", "session_token=$sessionToken")
+                        applyAuth(sessionToken, AuthType.PASSWORD)
                         setBody(rpcRequest.toString())
                     }
 
@@ -174,7 +175,7 @@ class KomariAuthService(private val httpClient: HttpClient) {
     suspend fun logout(baseUrl: String, sessionToken: String) {
         try {
             val url = baseUrl.trimEnd('/') + "/api/logout"
-            httpClient.post(url) { header("Cookie", "session_token=$sessionToken") }
+            httpClient.post(url) { applyAuth(sessionToken, AuthType.PASSWORD) }
             Log.d(TAG, "Logout successful")
         } catch (e: Exception) {
             Log.w(TAG, "Logout error: ${e.message}")

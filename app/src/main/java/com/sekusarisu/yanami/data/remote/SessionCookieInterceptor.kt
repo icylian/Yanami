@@ -28,19 +28,21 @@ class SessionCookieInterceptor(private val sessionManager: SessionManager) : Int
             val newRequest =
                     when (authType) {
                         AuthType.API_KEY -> {
+                            val authHeader = buildAuthHeader(sessionToken, authType)
+                            if (authHeader == null) return chain.proceed(originalRequest)
                             Log.d(
                                     TAG,
                                     "Injecting Bearer token for ${originalRequest.url.host}${originalRequest.url.encodedPath}"
                             )
                             originalRequest
                                     .newBuilder()
-                                    .header("Authorization", "Bearer $sessionToken")
+                                    .header(authHeader.name, authHeader.value)
                                     .build()
                         }
                         AuthType.PASSWORD -> {
                             // 构造 Cookie header，保留原有 Cookie（如果有的话）
                             val existingCookie = originalRequest.header("Cookie")
-                            val sessionCookie = "session_token=$sessionToken"
+                            val sessionCookie = buildSessionCookie(sessionToken)
                             val fullCookie =
                                     if (existingCookie.isNullOrBlank()) sessionCookie
                                     else "$existingCookie; $sessionCookie"

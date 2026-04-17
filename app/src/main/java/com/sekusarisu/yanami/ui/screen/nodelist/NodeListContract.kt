@@ -15,7 +15,6 @@ object NodeListContract {
             val isLoading: Boolean = true,
             val isRefreshing: Boolean = false,
             val nodes: List<Node> = emptyList(),
-            val filteredNodes: List<Node> = emptyList(),
             val searchQuery: String = "",
             val groups: List<String> = emptyList(),
             val selectedGroup: String? = null, // null = 全部
@@ -38,11 +37,13 @@ object NodeListContract {
         data object Refresh : Event
         data object Retry : Event
         data class NodeClicked(val uuid: String) : Event
+        data object ManageClientsClicked : Event
     }
 
     sealed interface Effect : UiEffect {
         data class ShowToast(val message: String) : Effect
         data class NavigateToNodeDetail(val uuid: String) : Effect
+        data object NavigateToClientManagement : Effect
         data class NavigateToServerRelogin(val serverId: Long, val forceTwoFa: Boolean) : Effect
         data class NavigateToServerEdit(val serverId: Long) : Effect
     }

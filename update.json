@@ -1,6 +1,6 @@
 {
-    "versionCode": 8,
-    "versionName": "1.0.7",
+    "versionCode": 9,
+    "versionName": "1.1.0",
     "downloadUrl": "https://github.com/icylian/Yanami/releases/latest",
-    "changelog": "新增代码片段功能、优化平板布局。"
+    "changelog": "新增配置备份导入导出；对接管理后台的节点管理、延迟监测管理功能；优化架构和性能。"
 }

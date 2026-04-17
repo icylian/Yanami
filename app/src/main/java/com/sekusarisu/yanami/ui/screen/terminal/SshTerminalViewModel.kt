@@ -3,6 +3,8 @@ package com.sekusarisu.yanami.ui.screen.terminal
 import android.util.Log
 import cafe.adriel.voyager.core.model.screenModelScope
 import com.sekusarisu.yanami.data.local.preferences.UserPreferencesRepository
+import com.sekusarisu.yanami.data.remote.buildKomariWebSocketEndpoint
+import com.sekusarisu.yanami.data.remote.runKomariWebSocketLifecycle
 import com.sekusarisu.yanami.data.remote.SessionManager
 import com.sekusarisu.yanami.domain.model.TerminalSnippet
 import com.sekusarisu.yanami.domain.model.AuthType
@@ -13,9 +15,6 @@ import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
-import io.ktor.client.plugins.websocket.ws
-import io.ktor.client.plugins.websocket.wss
-import io.ktor.client.request.header
 import io.ktor.websocket.Frame
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -222,22 +221,14 @@ class SshTerminalViewModel(
                         return@launch
                     }
 
-                    // 解析 baseUrl → ws(s)://host:port/path
-                    val cleanUrl = server.baseUrl.trimEnd('/')
-                    val withoutScheme =
-                            cleanUrl.removePrefix("https://").removePrefix("http://")
-                    val host = withoutScheme.substringBefore('/').substringBefore(':')
-                    val portStr = withoutScheme.substringBefore('/').substringAfter(':', "")
-                    val isSecure = cleanUrl.startsWith("https")
-                    val defaultPort = if (isSecure) 443 else 80
-                    val port = portStr.toIntOrNull() ?: defaultPort
-                    val pathPrefix =
-                            withoutScheme.substringAfter(withoutScheme.substringBefore('/'), "")
-                    val wsPath = "$pathPrefix/api/admin/client/$uuid/terminal"
-                    val origin = if (isSecure) "https://$host" else "http://$host"
+                    val endpoint =
+                            buildKomariWebSocketEndpoint(
+                                    server.baseUrl,
+                                    "/api/admin/client/$uuid/terminal"
+                            )
                     val authType = sessionManager.getAuthType() ?: AuthType.PASSWORD
 
-                    Log.d(TAG, "Connecting to $host:$port$wsPath (secure=$isSecure, authType=$authType)")
+                    Log.d(TAG, "Preparing terminal WebSocket (authType=$authType)")
 
                     try {
                         val wsBlock: suspend DefaultClientWebSocketSession.() -> Unit = {
@@ -296,41 +287,13 @@ class SshTerminalViewModel(
                             }
                         }
 
-                        if (isSecure) {
-                            httpClient.wss(
-                                    host = host,
-                                    port = port,
-                                    path = wsPath,
-                                    request = {
-                                        when (authType) {
-                                            AuthType.API_KEY ->
-                                                    header("Authorization", "Bearer $sessionToken")
-                                            AuthType.PASSWORD ->
-                                                    header("Cookie", "session_token=$sessionToken")
-                                            AuthType.GUEST -> {}
-                                        }
-                                        header("Origin", origin)
-                                    },
-                                    block = wsBlock
-                            )
-                        } else {
-                            httpClient.ws(
-                                    host = host,
-                                    port = port,
-                                    path = wsPath,
-                                    request = {
-                                        when (authType) {
-                                            AuthType.API_KEY ->
-                                                    header("Authorization", "Bearer $sessionToken")
-                                            AuthType.PASSWORD ->
-                                                    header("Cookie", "session_token=$sessionToken")
-                                            AuthType.GUEST -> {}
-                                        }
-                                        header("Origin", origin)
-                                    },
-                                    block = wsBlock
-                            )
-                        }
+                        httpClient.runKomariWebSocketLifecycle(
+                                endpoint = endpoint,
+                                sessionToken = sessionToken,
+                                authType = authType,
+                                loggerTag = TAG,
+                                block = wsBlock
+                        )
                         // 连接正常关闭
                         sendEffect(SshTerminalContract.Effect.NavigateBack)
                     } catch (e: Exception) {
