@@ -51,6 +51,7 @@ class NotificationManagementViewModel(
                 setOfflineEnabled(event.uuid, event.enabled)
             }
             is NotificationManagementContract.Event.EditOfflineClicked -> openOfflineEditor(event.uuid)
+            is NotificationManagementContract.Event.BatchEditOfflineClicked -> openOfflineBatchEditor()
             is NotificationManagementContract.Event.OfflineEditorGracePeriodChanged -> {
                 val editor = currentState.offlineEditor ?: return
                 setState { copy(offlineEditor = editor.copy(gracePeriod = event.value)) }
@@ -59,6 +60,33 @@ class NotificationManagementViewModel(
                 setState { copy(offlineEditor = null) }
             }
             is NotificationManagementContract.Event.SaveOfflineEditor -> saveOfflineEditor()
+            is NotificationManagementContract.Event.OfflineBatchEnabledChanged -> {
+                val editor = currentState.offlineBatchEditor ?: return
+                setState { copy(offlineBatchEditor = editor.copy(enabled = event.value)) }
+            }
+            is NotificationManagementContract.Event.OfflineBatchGracePeriodChanged -> {
+                val editor = currentState.offlineBatchEditor ?: return
+                setState { copy(offlineBatchEditor = editor.copy(gracePeriod = event.value)) }
+            }
+            is NotificationManagementContract.Event.ToggleOfflineBatchClient -> {
+                val editor = currentState.offlineBatchEditor ?: return
+                val nextSelection =
+                    editor.selectedClientUuids.toMutableSet().apply {
+                        if (!add(event.uuid)) {
+                            remove(event.uuid)
+                        }
+                    }
+                setState {
+                    copy(
+                        offlineBatchEditor =
+                            editor.copy(selectedClientUuids = nextSelection)
+                    )
+                }
+            }
+            is NotificationManagementContract.Event.DismissOfflineBatchEditor -> {
+                setState { copy(offlineBatchEditor = null) }
+            }
+            is NotificationManagementContract.Event.SaveOfflineBatchEditor -> saveOfflineBatchEditor()
             is NotificationManagementContract.Event.LoadAddClicked -> {
                 setState {
                     copy(
@@ -219,6 +247,42 @@ class NotificationManagementViewModel(
         }
     }
 
+    private fun openOfflineBatchEditor() {
+        val items = currentState.filteredOfflineItems
+        if (items.isEmpty()) return
+        val selectedClientUuids =
+            items.filter { it.config.enabled }.mapTo(linkedSetOf()) { it.client.uuid }
+        val selectedItems =
+            items.filter { item -> selectedClientUuids.contains(item.client.uuid) }
+        val enabled =
+            when {
+                selectedItems.isEmpty() -> true
+                selectedItems.all { it.config.enabled } -> true
+                selectedItems.all { !it.config.enabled } -> false
+                else -> true
+            }
+        val gracePeriod =
+            if (
+                selectedItems.isNotEmpty() &&
+                    selectedItems.map { it.config.gracePeriod }.distinct().size == 1
+            ) {
+                selectedItems.first().config.gracePeriod.toString()
+            } else {
+                "300"
+            }
+        setState {
+            copy(
+                offlineBatchEditor =
+                    NotificationManagementContract.OfflineBatchEditorState(
+                        items = items,
+                        selectedClientUuids = selectedClientUuids,
+                        enabled = enabled,
+                        gracePeriod = gracePeriod
+                    )
+            )
+        }
+    }
+
     private fun saveOfflineEditor() {
         val editor = currentState.offlineEditor ?: return
         val currentConfig =
@@ -226,6 +290,7 @@ class NotificationManagementViewModel(
                 ?: OfflineNotificationConfig(
                     clientUuid = editor.client.uuid,
                     enabled = false,
+                    cooldown = 3000,
                     gracePeriod = 0
                 )
 
@@ -264,6 +329,69 @@ class NotificationManagementViewModel(
                         context.getString(
                             R.string.notification_management_offline_saved,
                             editor.client.name.ifBlank { editor.client.uuid }
+                        )
+                    )
+                )
+                refreshNotifications()
+            }
+        }
+    }
+
+    private fun saveOfflineBatchEditor() {
+        val editor = currentState.offlineBatchEditor ?: return
+        val items =
+            editor.items.filter { item -> editor.selectedClientUuids.contains(item.client.uuid) }
+        if (items.isEmpty()) {
+            sendEffect(
+                NotificationManagementContract.Effect.ShowToast(
+                    context.getString(R.string.notification_management_offline_batch_empty_selection)
+                )
+            )
+            return
+        }
+
+        setState { copy(isSaving = true) }
+        screenModelScope.launch {
+            withServerSession(
+                onAuthError = ::handleSessionExpired,
+                onError = { e ->
+                    setState { copy(isSaving = false) }
+                    sendEffect(
+                        NotificationManagementContract.Effect.ShowToast(
+                            context.getString(
+                                R.string.notification_management_offline_batch_save_failed,
+                                e.message
+                            )
+                        )
+                    )
+                }
+            ) { server, sessionToken ->
+                val gracePeriod =
+                    editor.gracePeriod.trim().toIntOrNull()
+                        ?: throw IllegalArgumentException("grace_period 必须是整数")
+                require(gracePeriod >= 0) { "grace_period 不能为负数" }
+
+                val configs =
+                    items.map { item ->
+                        item.config.copy(
+                            enabled = editor.enabled,
+                            cooldown = 3000,
+                            gracePeriod = gracePeriod
+                        )
+                    }
+
+                notificationRepository.updateOfflineNotifications(
+                    baseUrl = server.baseUrl,
+                    sessionToken = sessionToken,
+                    authType = server.authType,
+                    configs = configs
+                )
+                setState { copy(isSaving = false, offlineBatchEditor = null) }
+                sendEffect(
+                    NotificationManagementContract.Effect.ShowToast(
+                        context.getString(
+                            R.string.notification_management_offline_batch_saved,
+                            items.size
                         )
                     )
                 )
@@ -571,6 +699,7 @@ private fun buildOfflineItems(
                     ?: OfflineNotificationConfig(
                         clientUuid = client.uuid,
                         enabled = false,
+                        cooldown = 3000,
                         gracePeriod = 0,
                         lastNotified = null
                     )

@@ -233,6 +233,14 @@
     <string name="notification_management_offline_saved">已保存「%1$s」的离线通知配置</string>
     <string name="notification_management_offline_save_failed">保存离线通知失败: %1$s</string>
     <string name="notification_management_offline_toggle_failed">更新离线通知开关失败: %1$s</string>
+    <string name="notification_management_offline_batch_edit">批量修改</string>
+    <string name="notification_management_offline_batch_edit_title">批量修改 %1$d 个客户端</string>
+    <string name="notification_management_offline_batch_scope">批量范围</string>
+    <string name="notification_management_offline_batch_selected_count">已选择 %1$d 个客户端</string>
+    <string name="notification_management_offline_batch_enabled">启用离线通知</string>
+    <string name="notification_management_offline_batch_empty_selection">请至少选择一个客户端</string>
+    <string name="notification_management_offline_batch_saved">已批量更新 %1$d 个客户端的离线通知配置</string>
+    <string name="notification_management_offline_batch_save_failed">批量保存离线通知失败: %1$s</string>
     <string name="notification_management_load_empty">没有匹配的负载通知</string>
     <string name="notification_management_load_create">新建负载通知</string>
     <string name="notification_management_load_metric">监测指标</string>

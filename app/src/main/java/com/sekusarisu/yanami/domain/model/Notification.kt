@@ -11,6 +11,7 @@ import kotlinx.serialization.json.putJsonArray
 data class OfflineNotificationConfig(
     val clientUuid: String,
     val enabled: Boolean,
+    val cooldown: Int = 3000,
     val gracePeriod: Int,
     val lastNotified: String? = null
 )
@@ -105,6 +106,7 @@ fun List<OfflineNotificationConfig>.toEditPayload(): JsonArray =
                 buildJsonObject {
                     put("client", config.clientUuid)
                     put("enable", config.enabled)
+                    put("cooldown", config.cooldown)
                     put("grace_period", config.gracePeriod)
                 }
             )

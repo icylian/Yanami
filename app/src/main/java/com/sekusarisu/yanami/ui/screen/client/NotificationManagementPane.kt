@@ -182,6 +182,26 @@ internal fun NotificationManagementPane(
         )
     }
 
+    state.offlineBatchEditor?.let { editor ->
+        OfflineNotificationBatchEditorDialog(
+            editor = editor,
+            isSaving = state.isSaving,
+            onDismiss = {
+                onEvent(NotificationManagementContract.Event.DismissOfflineBatchEditor)
+            },
+            onToggleClient = {
+                onEvent(NotificationManagementContract.Event.ToggleOfflineBatchClient(it))
+            },
+            onEnabledChanged = {
+                onEvent(NotificationManagementContract.Event.OfflineBatchEnabledChanged(it))
+            },
+            onGracePeriodChanged = {
+                onEvent(NotificationManagementContract.Event.OfflineBatchGracePeriodChanged(it))
+            },
+            onSave = { onEvent(NotificationManagementContract.Event.SaveOfflineBatchEditor) }
+        )
+    }
+
     state.loadEditor?.let { editor ->
         LoadNotificationEditorDialog(
             editor = editor,
@@ -243,15 +263,29 @@ private fun OfflineNotificationSection(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        Text(
-            text =
-                stringResource(
-                    R.string.notification_management_total_count,
-                    state.filteredOfflineItems.size,
-                    state.offlineItems.size
-                ),
-            style = MaterialTheme.typography.bodyMedium
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text =
+                    stringResource(
+                        R.string.notification_management_total_count,
+                        state.filteredOfflineItems.size,
+                        state.offlineItems.size
+                    ),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            OutlinedButton(
+                onClick = {
+                    onEvent(NotificationManagementContract.Event.BatchEditOfflineClicked)
+                },
+                enabled = state.filteredOfflineItems.isNotEmpty() && !state.isSaving
+            ) {
+                Text(stringResource(R.string.notification_management_offline_batch_edit))
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -545,6 +579,97 @@ private fun OfflineNotificationEditorDialog(
         },
         confirmButton = {
             TextButton(onClick = onSave, enabled = !isSaving) {
+                Text(stringResource(R.string.action_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isSaving) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun OfflineNotificationBatchEditorDialog(
+    editor: NotificationManagementContract.OfflineBatchEditorState,
+    isSaving: Boolean,
+    onDismiss: () -> Unit,
+    onToggleClient: (String) -> Unit,
+    onEnabledChanged: (Boolean) -> Unit,
+    onGracePeriodChanged: (String) -> Unit,
+    onSave: () -> Unit
+) {
+    val selectedCount = editor.selectedClientUuids.size
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                stringResource(
+                    R.string.notification_management_offline_batch_edit_title,
+                    selectedCount
+                )
+            )
+        },
+        text = {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 520.dp)
+                        .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(stringResource(R.string.notification_management_offline_batch_enabled))
+                    Switch(
+                        checked = editor.enabled,
+                        onCheckedChange = onEnabledChanged,
+                        enabled = !isSaving
+                    )
+                }
+                OutlinedTextField(
+                    value = editor.gracePeriod,
+                    onValueChange = onGracePeriodChanged,
+                    label = { Text(stringResource(R.string.notification_management_offline_grace_period_label)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                Text(
+                    text = stringResource(R.string.notification_management_offline_batch_scope),
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Text(
+                    text =
+                        stringResource(
+                            R.string.notification_management_offline_batch_selected_count,
+                            selectedCount
+                        ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    editor.items.forEach { item ->
+                        FilterChip(
+                            selected = editor.selectedClientUuids.contains(item.client.uuid),
+                            onClick = { onToggleClient(item.client.uuid) },
+                            label = { Text(item.client.name.ifBlank { item.client.uuid }) }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onSave, enabled = !isSaving && selectedCount > 0) {
                 Text(stringResource(R.string.action_save))
             }
         },

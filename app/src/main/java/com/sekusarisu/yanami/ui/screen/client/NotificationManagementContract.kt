@@ -23,6 +23,7 @@ object NotificationManagementContract {
         val searchQuery: String = "",
         val currentView: ContentView = ContentView.OFFLINE,
         val offlineEditor: OfflineEditorState? = null,
+        val offlineBatchEditor: OfflineBatchEditorState? = null,
         val loadEditor: LoadEditorState? = null,
         val pendingDeleteLoadTask: LoadNotificationTask? = null,
         val error: String? = null,
@@ -44,6 +45,13 @@ object NotificationManagementContract {
         val gracePeriod: String = "0"
     )
 
+    data class OfflineBatchEditorState(
+        val items: List<OfflineItem> = emptyList(),
+        val selectedClientUuids: Set<String> = emptySet(),
+        val enabled: Boolean = true,
+        val gracePeriod: String = "300"
+    )
+
     data class LoadEditorState(
         val mode: EditorMode,
         val taskId: Int? = null,
@@ -63,9 +71,15 @@ object NotificationManagementContract {
         data class ViewChanged(val view: ContentView) : Event
         data class OfflineEnabledChanged(val uuid: String, val enabled: Boolean) : Event
         data class EditOfflineClicked(val uuid: String) : Event
+        data object BatchEditOfflineClicked : Event
         data class OfflineEditorGracePeriodChanged(val value: String) : Event
         data object DismissOfflineEditor : Event
         data object SaveOfflineEditor : Event
+        data class OfflineBatchEnabledChanged(val value: Boolean) : Event
+        data class OfflineBatchGracePeriodChanged(val value: String) : Event
+        data class ToggleOfflineBatchClient(val uuid: String) : Event
+        data object DismissOfflineBatchEditor : Event
+        data object SaveOfflineBatchEditor : Event
         data object LoadAddClicked : Event
         data class LoadEditClicked(val id: Int) : Event
         data object DismissLoadEditor : Event

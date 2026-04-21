@@ -233,6 +233,14 @@
     <string name="notification_management_offline_saved">Saved offline notification settings for \"%1$s\"</string>
     <string name="notification_management_offline_save_failed">Failed to save offline notification: %1$s</string>
     <string name="notification_management_offline_toggle_failed">Failed to update offline notification switch: %1$s</string>
+    <string name="notification_management_offline_batch_edit">Batch Edit</string>
+    <string name="notification_management_offline_batch_edit_title">Batch edit %1$d clients</string>
+    <string name="notification_management_offline_batch_scope">Batch scope</string>
+    <string name="notification_management_offline_batch_selected_count">%1$d clients selected</string>
+    <string name="notification_management_offline_batch_enabled">Enable offline notifications</string>
+    <string name="notification_management_offline_batch_empty_selection">Select at least one client</string>
+    <string name="notification_management_offline_batch_saved">Updated offline notification settings for %1$d clients</string>
+    <string name="notification_management_offline_batch_save_failed">Failed to batch save offline notifications: %1$s</string>
     <string name="notification_management_load_empty">No matching load notifications</string>
     <string name="notification_management_load_create">New Load Notification</string>
     <string name="notification_management_load_metric">Metric</string>

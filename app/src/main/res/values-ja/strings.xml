@@ -233,6 +233,14 @@
     <string name="notification_management_offline_saved">「%1$s」のオフライン通知設定を保存しました</string>
     <string name="notification_management_offline_save_failed">オフライン通知の保存に失敗しました: %1$s</string>
     <string name="notification_management_offline_toggle_failed">オフライン通知の切り替えに失敗しました: %1$s</string>
+    <string name="notification_management_offline_batch_edit">一括編集</string>
+    <string name="notification_management_offline_batch_edit_title">%1$d 件のクライアントを一括編集</string>
+    <string name="notification_management_offline_batch_scope">対象クライアント</string>
+    <string name="notification_management_offline_batch_selected_count">%1$d 件のクライアントを選択中</string>
+    <string name="notification_management_offline_batch_enabled">オフライン通知を有効化</string>
+    <string name="notification_management_offline_batch_empty_selection">少なくとも 1 件のクライアントを選択してください</string>
+    <string name="notification_management_offline_batch_saved">%1$d 件のクライアントのオフライン通知設定を更新しました</string>
+    <string name="notification_management_offline_batch_save_failed">オフライン通知の一括保存に失敗しました: %1$s</string>
     <string name="notification_management_load_empty">一致する負荷通知がありません</string>
     <string name="notification_management_load_create">負荷通知を新規作成</string>
     <string name="notification_management_load_metric">指標</string>

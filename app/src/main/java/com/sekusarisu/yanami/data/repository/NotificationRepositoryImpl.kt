@@ -97,6 +97,7 @@ private fun OfflineNotificationDto.toDomain(): OfflineNotificationConfig =
     OfflineNotificationConfig(
         clientUuid = clientUuid,
         enabled = enabled,
+        cooldown = 3000,
         gracePeriod = gracePeriod,
         lastNotified = lastNotified
     )
