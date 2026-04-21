@@ -8,6 +8,7 @@ import com.sekusarisu.yanami.data.local.YanamiDatabase
 import com.sekusarisu.yanami.data.local.crypto.CryptoManager
 import com.sekusarisu.yanami.data.local.preferences.UserPreferencesRepository
 import com.sekusarisu.yanami.data.remote.KomariAdminClientService
+import com.sekusarisu.yanami.data.remote.KomariAdminNotificationService
 import com.sekusarisu.yanami.data.remote.KomariAdminPingService
 import com.sekusarisu.yanami.data.remote.KomariAuthService
 import com.sekusarisu.yanami.data.remote.KomariRpcService
@@ -16,15 +17,18 @@ import com.sekusarisu.yanami.data.remote.SessionManager
 import com.sekusarisu.yanami.data.remote.UpdateCheckService
 import com.sekusarisu.yanami.data.repository.ClientRepositoryImpl
 import com.sekusarisu.yanami.data.repository.NodeRepositoryImpl
+import com.sekusarisu.yanami.data.repository.NotificationRepositoryImpl
 import com.sekusarisu.yanami.data.repository.PingTaskRepositoryImpl
 import com.sekusarisu.yanami.data.repository.ServerRepositoryImpl
 import com.sekusarisu.yanami.domain.repository.ClientRepository
 import com.sekusarisu.yanami.domain.repository.NodeRepository
+import com.sekusarisu.yanami.domain.repository.NotificationRepository
 import com.sekusarisu.yanami.domain.repository.PingTaskRepository
 import com.sekusarisu.yanami.domain.repository.ServerRepository
 import com.sekusarisu.yanami.ui.screen.client.ClientCreateViewModel
 import com.sekusarisu.yanami.ui.screen.client.ClientEditViewModel
 import com.sekusarisu.yanami.ui.screen.client.ClientManagementViewModel
+import com.sekusarisu.yanami.ui.screen.client.NotificationManagementViewModel
 import com.sekusarisu.yanami.ui.screen.client.PingTaskManagementViewModel
 import com.sekusarisu.yanami.ui.screen.nodedetail.NodeDetailViewModel
 import com.sekusarisu.yanami.ui.screen.nodelist.NodeListViewModel
@@ -97,6 +101,7 @@ val appModule = module {
     single { KomariAuthService(get()) }
     single { KomariRpcService(get()) }
     single { KomariAdminClientService(get()) }
+    single { KomariAdminNotificationService(get()) }
     single { KomariAdminPingService(get()) }
     single { UpdateCheckService() }
 
@@ -112,6 +117,7 @@ val appModule = module {
     }
     single<NodeRepository> { NodeRepositoryImpl(rpcService = get()) }
     single<ClientRepository> { ClientRepositoryImpl(service = get()) }
+    single<NotificationRepository> { NotificationRepositoryImpl(service = get()) }
     single<PingTaskRepository> { PingTaskRepositoryImpl(service = get()) }
 
     // ─── ScreenModels (Voyager) ───
@@ -122,6 +128,7 @@ val appModule = module {
     }
     factory { NodeListViewModel(get(), get(), androidContext()) }
     factory { ClientManagementViewModel(get(), get(), androidContext()) }
+    factory { NotificationManagementViewModel(get(), get(), get(), androidContext()) }
     factory { PingTaskManagementViewModel(get(), get(), get(), androidContext()) }
     factory { ClientCreateViewModel(get(), get(), androidContext()) }
     factory { (uuid: String) -> ClientEditViewModel(uuid, get(), get(), androidContext()) }

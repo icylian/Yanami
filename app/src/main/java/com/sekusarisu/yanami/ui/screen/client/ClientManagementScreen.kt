@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.AlertDialog
@@ -73,7 +74,8 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 // without touching the screen shell structure again.
 private enum class NodeAdminSection {
     CLIENTS,
-    PING
+    PING,
+    NOTIFICATIONS
 }
 
 class ClientManagementScreen : Screen {
@@ -85,6 +87,8 @@ class ClientManagementScreen : Screen {
         val clientState by clientViewModel.state.collectAsState()
         val pingViewModel = koinScreenModel<PingTaskManagementViewModel>()
         val pingState by pingViewModel.state.collectAsState()
+        val notificationViewModel = koinScreenModel<NotificationManagementViewModel>()
+        val notificationState by notificationViewModel.state.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
         val context = LocalContext.current
         val lifecycleOwner = LocalLifecycleOwner.current
@@ -96,6 +100,7 @@ class ClientManagementScreen : Screen {
                 if (event == Lifecycle.Event.ON_RESUME) {
                     clientViewModel.refreshIfLoaded()
                     pingViewModel.refreshIfLoaded()
+                    notificationViewModel.refreshIfLoaded()
                 }
             }
             lifecycleOwner.lifecycle.addObserver(observer)
@@ -105,6 +110,8 @@ class ClientManagementScreen : Screen {
         LaunchedEffect(activeSection) {
             if (activeSection == NodeAdminSection.PING) {
                 pingViewModel.onEvent(PingTaskManagementContract.Event.EnsureLoaded)
+            } else if (activeSection == NodeAdminSection.NOTIFICATIONS) {
+                notificationViewModel.onEvent(NotificationManagementContract.Event.EnsureLoaded)
             }
         }
 
@@ -160,6 +167,29 @@ class ClientManagementScreen : Screen {
             }
         }
 
+        LaunchedEffect(Unit) {
+            notificationViewModel.effect.collect { effect ->
+                when (effect) {
+                    is NotificationManagementContract.Effect.ShowToast -> {
+                        Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    }
+                    is NotificationManagementContract.Effect.NavigateToServerRelogin -> {
+                        navigator.replaceAll(ServerListScreen())
+                        navigator.push(
+                            ServerReLoginScreen(
+                                serverId = effect.serverId,
+                                forceTwoFa = effect.forceTwoFa
+                            )
+                        )
+                    }
+                    is NotificationManagementContract.Effect.NavigateToServerEdit -> {
+                        navigator.replaceAll(ServerListScreen())
+                        navigator.push(AddServerScreen(editServerId = effect.serverId))
+                    }
+                }
+            }
+        }
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -170,6 +200,8 @@ class ClientManagementScreen : Screen {
                                     stringResource(R.string.client_management_title)
                                 NodeAdminSection.PING ->
                                     stringResource(R.string.ping_task_management_title)
+                                NodeAdminSection.NOTIFICATIONS ->
+                                    stringResource(R.string.notification_management_title)
                             }
                         )
                     },
@@ -214,6 +246,28 @@ class ClientManagementScreen : Screen {
                                     }
                                 }
                             }
+                            NodeAdminSection.NOTIFICATIONS -> {
+                                if (
+                                    notificationState.currentView ==
+                                        NotificationManagementContract.ContentView.LOAD
+                                ) {
+                                    IconButton(
+                                        onClick = soundClick {
+                                            notificationViewModel.onEvent(
+                                                NotificationManagementContract.Event.LoadAddClicked
+                                            )
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription =
+                                                stringResource(
+                                                    R.string.notification_management_load_create
+                                                )
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 )
@@ -240,6 +294,16 @@ class ClientManagementScreen : Screen {
                             Text(stringResource(R.string.client_management_nav_ping))
                         }
                     )
+                    NavigationBarItem(
+                        selected = activeSection == NodeAdminSection.NOTIFICATIONS,
+                        onClick = { selectedSection = NodeAdminSection.NOTIFICATIONS.name },
+                        icon = {
+                            Icon(Icons.Default.Notifications, contentDescription = null)
+                        },
+                        label = {
+                            Text(stringResource(R.string.client_management_nav_notifications))
+                        }
+                    )
                 }
             }
         ) { innerPadding ->
@@ -259,6 +323,13 @@ class ClientManagementScreen : Screen {
                     PingTaskManagementPane(
                         state = pingState,
                         onEvent = pingViewModel::onEvent,
+                        modifier = Modifier.fillMaxSize().padding(innerPadding)
+                    )
+                }
+                NodeAdminSection.NOTIFICATIONS -> {
+                    NotificationManagementPane(
+                        state = notificationState,
+                        onEvent = notificationViewModel::onEvent,
                         modifier = Modifier.fillMaxSize().padding(innerPadding)
                     )
                 }
