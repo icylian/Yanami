@@ -100,7 +100,9 @@
 ./gradlew clean assembleDebug
 
 # 未签名 iPhone IPA
-VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+BASE_VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+BUILD_NUMBER=${GITHUB_RUN_NUMBER:-1}
+VERSION="${BASE_VERSION}-${BUILD_NUMBER}"
 xcodebuild \
   -project ios/Yanami.xcodeproj \
   -scheme Yanami \
@@ -113,13 +115,15 @@ xcodebuild \
   CODE_SIGN_IDENTITY="" \
   DEVELOPMENT_TEAM="" \
   PROVISIONING_PROFILE_SPECIFIER="" \
+  MARKETING_VERSION="$BASE_VERSION" \
+  CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
   build
 mkdir -p build/ios-ipa/Payload
 ditto build/ios/Build/Products/Release-iphoneos/Yanami.app build/ios-ipa/Payload/Yanami.app
 (cd build/ios-ipa && ditto -c -k --sequesterRsrc --keepParent Payload "../Yanami-v${VERSION}.ipa")
 ```
 
-Android 构建产物位于 `app/build/outputs/apk/`。未签名 iPhone IPA 位于 `build/Yanami-v<version>.ipa`，安装到真机前需要使用者自行签名。
+Android 构建产物位于 `app/build/outputs/apk/`。未签名 iPhone IPA 位于 `build/Yanami-v<基础版本>-<构建编号>.ipa`，安装到真机前需要使用者自行签名。
 
 ## 技术栈
 

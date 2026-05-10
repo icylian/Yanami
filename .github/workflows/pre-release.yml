@@ -80,6 +80,7 @@ jobs:
 
       - name: Build unsigned iPhone device app
         run: |
+          BASE_VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
           xcodebuild \
             -project ios/Yanami.xcodeproj \
             -scheme Yanami \
@@ -92,11 +93,14 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="" \
             PROVISIONING_PROFILE_SPECIFIER="" \
+            MARKETING_VERSION="$BASE_VERSION" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             build
 
       - name: Package unsigned iPhone IPA
         run: |
-          VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          BASE_VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          VERSION="${BASE_VERSION}-${GITHUB_RUN_NUMBER}"
           mkdir -p prerelease/iphone
           APP_PATH="build/ios/Build/Products/Release-iphoneos/Yanami.app"
           test -d "$APP_PATH"
@@ -140,7 +144,8 @@ jobs:
       - name: Prepare release assets
         id: assets
         run: |
-          VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          BASE_VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          VERSION="${BASE_VERSION}-${GITHUB_RUN_NUMBER}"
           SHORT_SHA="${GITHUB_SHA::7}"
           mkdir -p prerelease/assets
 
@@ -162,7 +167,9 @@ jobs:
             cp "$ipa" "prerelease/assets/Yanami-v${VERSION}.ipa"
           done
 
+          echo "base_version=$BASE_VERSION" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build_number=$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Update pre-release tag
@@ -172,7 +179,7 @@ jobs:
           git tag -f pre-release "$GITHUB_SHA"
           git push origin refs/tags/pre-release --force
 
-      - name: Remove stale iPhone simulator assets
+      - name: Remove stale pre-release assets
         uses: actions/github-script@v7
         with:
           script: |
@@ -184,7 +191,7 @@ jobs:
               });
 
               for (const asset of release.data.assets) {
-                if (asset.name.includes('iphone-simulator')) {
+                if (asset.name.startsWith('Yanami-v')) {
                   await github.rest.repos.deleteReleaseAsset({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
@@ -205,6 +212,9 @@ jobs:
           name: Yanami Pre-release ${{ steps.assets.outputs.version }}
           body: |
             Automated pre-release build from `${{ github.sha }}`.
+
+            Version: `${{ steps.assets.outputs.version }}`
+            Build number: `${{ steps.assets.outputs.build_number }}`
 
             This build passed:
             - `testDebugUnitTest`
