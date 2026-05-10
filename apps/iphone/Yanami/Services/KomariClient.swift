@@ -101,15 +101,15 @@ struct KomariClient {
     }
 
     func getRecentStatus(token: String, uuid: String) async throws -> [LoadRecord] {
-        let encodedUuid = uuid.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? uuid
-        let request = try makeRequest(path: "/api/recent/\(encodedUuid)", method: "GET", token: token)
+        let encodedUuid = uuid.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? uuid
+        let request = try makeRequest(path: "/api/recent?uuid=\(encodedUuid)", method: "GET", token: token)
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KomariClientError.invalidResponse
         }
         guard (200...299).contains(httpResponse.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? ""
-            throw KomariClientError.httpStatus(httpResponse.statusCode, path: "/api/recent/\(encodedUuid)", body: body)
+            throw KomariClientError.httpStatus(httpResponse.statusCode, path: "/api/recent?uuid=\(encodedUuid)", body: body)
         }
         let payload = try Self.decoder.decode(RecentStatusResponse.self, from: data)
         return payload.data.map { $0.toDomain() }

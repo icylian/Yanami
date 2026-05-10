@@ -74,9 +74,32 @@ struct ServerProfile: Codable, Equatable, Identifiable {
     }
 }
 
+struct TerminalSnippet: Codable, Equatable, Identifiable {
+    var id = UUID()
+    var title: String
+    var content: String
+    var appendEnter: Bool = true
+}
+
 struct AppSettings: Codable, Equatable {
     var autoRefreshEnabled = true
     var refreshIntervalSeconds = 2.0
+    var terminalFontSize: Int = 14
+    var snippets: [TerminalSnippet] = []
+
+    enum CodingKeys: String, CodingKey {
+        case autoRefreshEnabled, refreshIntervalSeconds, terminalFontSize, snippets
+    }
+
+    init() {}
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        autoRefreshEnabled = try container.decodeIfPresent(Bool.self, forKey: .autoRefreshEnabled) ?? true
+        refreshIntervalSeconds = try container.decodeIfPresent(Double.self, forKey: .refreshIntervalSeconds) ?? 2.0
+        terminalFontSize = try container.decodeIfPresent(Int.self, forKey: .terminalFontSize) ?? 14
+        snippets = try container.decodeIfPresent([TerminalSnippet].self, forKey: .snippets) ?? []
+    }
 }
 
 struct PersistedAppState: Codable {

@@ -92,8 +92,12 @@ struct NodeDetailView: View {
                     if store.activeServer?.authType == .guest {
                         Text("SSH terminal is disabled in guest mode.")
                             .foregroundStyle(.secondary)
-                    } else {
-                        TerminalPreviewView(node: node)
+                    } else if let server = store.activeServer, let node = store.nodeDetail.node {
+                        NavigationLink {
+                            TerminalNavigationWrapper(uuid: node.uuid, server: server)
+                        } label: {
+                            Label("Open SSH Terminal", systemImage: "terminal")
+                        }
                     }
                 }
             } else if let error = store.nodeDetail.error {
@@ -106,6 +110,57 @@ struct NodeDetailView: View {
         }
         .task {
             await store.loadNodeDetail(uuid: nodeId)
+        }
+    }
+}
+
+private struct TerminalNavigationWrapper: View {
+    let uuid: String
+    let server: ServerProfile
+    @EnvironmentObject private var store: AppStore
+    @State private var token: String?
+    @State private var error: String?
+
+    var body: some View {
+        Group {
+            if let token = token {
+                SshTerminalView(viewModel: SshTerminalViewModel(uuid: uuid, server: server, token: token))
+            } else if let error = error {
+                VStack {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundColor(.red)
+                    Text(error)
+                        .padding()
+                    Button("Retry") {
+                        Task { await resolveToken() }
+                    }
+                }
+            } else {
+                ProgressView("Preparing terminal...")
+            }
+        }
+        .task {
+            await resolveToken()
+        }
+    }
+
+    private func resolveToken() async {
+        do {
+            let client = KomariClient(profile: server)
+            switch server.authType {
+            case .guest:
+                error = "Guest mode not supported"
+            case .apiKey:
+                token = server.apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+            case .password:
+                if !server.sessionToken.isEmpty {
+                    token = server.sessionToken
+                } else {
+                    token = try await client.login()
+                }
+            }
+        } catch {
+            self.error = error.localizedDescription
         }
     }
 }
@@ -175,19 +230,6 @@ private struct PingSummaryView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-        }
-    }
-}
-
-private struct TerminalPreviewView: View {
-    let node: KomariNode
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Terminal endpoint is available for \(node.name).")
-            Text("Interactive ANSI terminal parity requires a signed device build and the server-side terminal WebSocket token flow.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
         }
     }
 }
