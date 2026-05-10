@@ -7,12 +7,30 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1A0000000000000000000008 /* YanamiApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000007 /* YanamiApp.swift */; };
+		092D6CCEB60FA79F15AFFB3A /* ServerListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB0C9919B9201D63F4C6CD36 /* ServerListView.swift */; };
+		2091B03D11A792A47833A9FF /* NodeListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8078F5ADD5B4F816E7DC1492 /* NodeListViewModel.swift */; };
+		35B13446CA9293541EEABE61 /* KomariClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F4E6E5123F8CB4ACFDCB0F /* KomariClient.swift */; };
+		442A86704F8889111A9F7D1C /* TerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CA6FF2927265B4229F7F83B /* TerminalView.swift */; };
+		878AD65C9DC60C4B9434E5D7 /* ServerListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57CC9E41772F7B33C292CF19 /* ServerListViewModel.swift */; };
+		AB67C40C1194DDD931E89EA2 /* NodeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5D7040152CE0A1A8EE77D69 /* NodeListView.swift */; };
+		AE33598DBDD05158498FDB37 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 215A282B85F681CC1B6EC791 /* Models.swift */; };
+		B3E13DA8DF3300BE49C760DE /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9CB8DCF25C23C5DA1D27D7D /* KeychainStore.swift */; };
+		DC9BDA258B94C4891BFDBA16 /* YanamiApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E9736B349634026165F28E /* YanamiApp.swift */; };
+		F70AD38C10B400D31D647269 /* NodeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BBB0BB1484AF407FF6CC7DA /* NodeDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		1A0000000000000000000006 /* Yanami.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yanami.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		1A0000000000000000000007 /* YanamiApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YanamiApp.swift; sourceTree = "<group>"; };
+		215A282B85F681CC1B6EC791 /* Models.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		2CA6FF2927265B4229F7F83B /* TerminalView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TerminalView.swift; sourceTree = "<group>"; };
+		53E9736B349634026165F28E /* YanamiApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = YanamiApp.swift; sourceTree = "<group>"; };
+		57CC9E41772F7B33C292CF19 /* ServerListViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ServerListViewModel.swift; sourceTree = "<group>"; };
+		8078F5ADD5B4F816E7DC1492 /* NodeListViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NodeListViewModel.swift; sourceTree = "<group>"; };
+		9BBB0BB1484AF407FF6CC7DA /* NodeDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NodeDetailView.swift; sourceTree = "<group>"; };
+		C0F4E6E5123F8CB4ACFDCB0F /* KomariClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KomariClient.swift; sourceTree = "<group>"; };
+		E5D7040152CE0A1A8EE77D69 /* NodeListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NodeListView.swift; sourceTree = "<group>"; };
+		EB0C9919B9201D63F4C6CD36 /* ServerListView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ServerListView.swift; sourceTree = "<group>"; };
+		F9CB8DCF25C23C5DA1D27D7D /* KeychainStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,9 +63,72 @@
 		1A0000000000000000000005 /* Yanami */ = {
 			isa = PBXGroup;
 			children = (
-				1A0000000000000000000007 /* YanamiApp.swift */,
+				7249A06DBA5B36543EB790B0 /* App */,
+				4B7A37D01C9CDF11A6243EC5 /* Models */,
+				713C45DF1B41BEE297ADE5EA /* Views */,
+				E9E289CF89153F410C4AAA45 /* ViewModels */,
+				804F83BE60AE5AF7713A6673 /* Networking */,
+				6D8197F46A404437D807F815 /* Data */,
 			);
 			path = Yanami;
+			sourceTree = "<group>";
+		};
+		4B7A37D01C9CDF11A6243EC5 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				215A282B85F681CC1B6EC791 /* Models.swift */,
+			);
+			name = Models;
+			path = Models;
+			sourceTree = "<group>";
+		};
+		6D8197F46A404437D807F815 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				F9CB8DCF25C23C5DA1D27D7D /* KeychainStore.swift */,
+			);
+			name = Data;
+			path = Data;
+			sourceTree = "<group>";
+		};
+		713C45DF1B41BEE297ADE5EA /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				9BBB0BB1484AF407FF6CC7DA /* NodeDetailView.swift */,
+				EB0C9919B9201D63F4C6CD36 /* ServerListView.swift */,
+				2CA6FF2927265B4229F7F83B /* TerminalView.swift */,
+				E5D7040152CE0A1A8EE77D69 /* NodeListView.swift */,
+			);
+			name = Views;
+			path = Views;
+			sourceTree = "<group>";
+		};
+		7249A06DBA5B36543EB790B0 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				53E9736B349634026165F28E /* YanamiApp.swift */,
+			);
+			name = App;
+			path = App;
+			sourceTree = "<group>";
+		};
+		804F83BE60AE5AF7713A6673 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				C0F4E6E5123F8CB4ACFDCB0F /* KomariClient.swift */,
+			);
+			name = Networking;
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		E9E289CF89153F410C4AAA45 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				57CC9E41772F7B33C292CF19 /* ServerListViewModel.swift */,
+				8078F5ADD5B4F816E7DC1492 /* NodeListViewModel.swift */,
+			);
+			name = ViewModels;
+			path = ViewModels;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -118,7 +199,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1A0000000000000000000008 /* YanamiApp.swift in Sources */,
+				DC9BDA258B94C4891BFDBA16 /* YanamiApp.swift in Sources */,
+				AE33598DBDD05158498FDB37 /* Models.swift in Sources */,
+				F70AD38C10B400D31D647269 /* NodeDetailView.swift in Sources */,
+				092D6CCEB60FA79F15AFFB3A /* ServerListView.swift in Sources */,
+				442A86704F8889111A9F7D1C /* TerminalView.swift in Sources */,
+				AB67C40C1194DDD931E89EA2 /* NodeListView.swift in Sources */,
+				878AD65C9DC60C4B9434E5D7 /* ServerListViewModel.swift in Sources */,
+				2091B03D11A792A47833A9FF /* NodeListViewModel.swift in Sources */,
+				35B13446CA9293541EEABE61 /* KomariClient.swift in Sources */,
+				B3E13DA8DF3300BE49C760DE /* KeychainStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

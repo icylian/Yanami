@@ -15,6 +15,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
 
     steps:
       - name: Checkout
@@ -69,7 +72,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Yanami-${{ steps.version.outputs.name }}
-          path: app/build/outputs/apk/release/Yanami-*.apk
+          path: android/app/build/outputs/apk/release/Yanami-*.apk
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v') || inputs.publish_release == true
@@ -79,4 +82,4 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-          files: app/build/outputs/apk/release/Yanami-*.apk
+          files: android/app/build/outputs/apk/release/Yanami-*.apk
