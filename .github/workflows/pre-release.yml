@@ -20,9 +20,6 @@ jobs:
   android-review:
     name: Android review
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: android
 
     steps:
       - name: Checkout
@@ -59,7 +56,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: yanami-debug-apks
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
       - name: Upload lint report
@@ -67,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: yanami-lint-report
-          path: android/app/build/reports/lint-results-debug.html
+          path: app/build/reports/lint-results-debug.html
           if-no-files-found: ignore
 
   iphone-review:
@@ -83,7 +80,7 @@ jobs:
 
       - name: Build unsigned iPhone device app
         run: |
-          BASE_VERSION=$(grep 'versionName' android/app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          BASE_VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
           xcodebuild \
             -project ios/Yanami.xcodeproj \
             -scheme Yanami \
@@ -102,7 +99,7 @@ jobs:
 
       - name: Package unsigned iPhone IPA
         run: |
-          BASE_VERSION=$(grep 'versionName' android/app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          BASE_VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
           VERSION="${BASE_VERSION}-${GITHUB_RUN_NUMBER}"
           mkdir -p prerelease/iphone
           APP_PATH="build/ios/Build/Products/Release-iphoneos/Yanami.app"
@@ -147,11 +144,9 @@ jobs:
       - name: Prepare release assets
         id: assets
         run: |
-          BASE_VERSION=$(grep 'versionName' android/app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          BASE_VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          VERSION="${BASE_VERSION}-${GITHUB_RUN_NUMBER}"
           SHORT_SHA="${GITHUB_SHA::7}"
-          SAFE_BRANCH=$(echo "${GITHUB_REF_NAME}" | sed 's/[^a-zA-Z0-9]/-/g')
-          VERSION="${BASE_VERSION}-${SAFE_BRANCH}-${SHORT_SHA}"
-          TAG_NAME="pre-release-${SAFE_BRANCH}-${SHORT_SHA}"
           mkdir -p prerelease/assets
 
           for apk in prerelease/raw/android/*.apk; do
@@ -176,15 +171,47 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "build_number=$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
-          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Update pre-release tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f pre-release "$GITHUB_SHA"
+          git push origin refs/tags/pre-release --force
+
+      - name: Remove stale pre-release assets
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const release = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: 'pre-release',
+              });
+
+              for (const asset of release.data.assets) {
+                if (asset.name.startsWith('Yanami-v')) {
+                  await github.rest.repos.deleteReleaseAsset({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    asset_id: asset.id,
+                  });
+                }
+              }
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+            }
 
       - name: Publish GitHub pre-release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.assets.outputs.tag_name }}
+          tag_name: pre-release
           name: Yanami Pre-release ${{ steps.assets.outputs.version }}
           body: |
-            Automated pre-release build from `${{ github.sha }}` on branch `${{ github.ref_name }}`.
+            Automated pre-release build from `${{ github.sha }}`.
 
             Version: `${{ steps.assets.outputs.version }}`
             Build number: `${{ steps.assets.outputs.build_number }}`
