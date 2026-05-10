@@ -172,6 +172,32 @@ jobs:
           git tag -f pre-release "$GITHUB_SHA"
           git push origin refs/tags/pre-release --force
 
+      - name: Remove stale iPhone simulator assets
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const release = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: 'pre-release',
+              });
+
+              for (const asset of release.data.assets) {
+                if (asset.name.includes('iphone-simulator')) {
+                  await github.rest.repos.deleteReleaseAsset({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    asset_id: asset.id,
+                  });
+                }
+              }
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+            }
+
       - name: Publish GitHub pre-release
         uses: softprops/action-gh-release@v2
         with:
@@ -184,6 +210,8 @@ jobs:
             - `testDebugUnitTest`
             - `assembleDebug`
             - `xcodebuild` for the unsigned iPhone device IPA
+
+            The iPhone IPA is unsigned and must be signed before device installation.
 
             `lintDebug` is uploaded as a non-blocking report artifact.
           prerelease: true
