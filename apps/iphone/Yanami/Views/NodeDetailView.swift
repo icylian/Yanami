@@ -184,11 +184,20 @@ private struct LoadChart: View {
         }
         .chartYScale(domain: 0...100)
         .chartXAxis {
-            if records.count > 0 {
-                AxisMarks(values: .stride(by: .hour)) { value in
-                    AxisGridLine()
-                    AxisTick()
-                    AxisValueLabel(format: .dateTime.hour().minute())
+            if let first = records.first, let last = records.last {
+                let span = parseISO8601(last.time).timeIntervalSince(parseISO8601(first.time))
+                if span <= 3600 {
+                    AxisMarks(values: .stride(by: .minute)) { _ in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel(format: .dateTime.minute().second())
+                    }
+                } else {
+                    AxisMarks(values: .stride(by: .hour)) { _ in
+                        AxisGridLine()
+                        AxisTick()
+                        AxisValueLabel(format: .dateTime.hour().minute())
+                    }
                 }
             }
         }
@@ -218,6 +227,8 @@ private struct PingChart: View {
 private func parseISO8601(_ string: String) -> Date {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    if let date = formatter.date(from: string) { return date }
+    formatter.formatOptions = [.withInternetDateTime]
     return formatter.date(from: string) ?? Date()
 }
 
@@ -326,6 +337,8 @@ final class SshTerminalViewModel: ObservableObject {
         
         var request = URLRequest(url: url)
         request.setValue("session_token=\(token)", forHTTPHeaderField: "Cookie")
+        request.setValue("YanamiNext-iPhone/1.0", forHTTPHeaderField: "User-Agent")
+        request.setValue(server.normalizedBaseURL, forHTTPHeaderField: "Origin")
         server.sanitizedCustomHeaders.forEach { header in
             request.setValue(header.value, forHTTPHeaderField: header.name)
         }
@@ -496,7 +509,7 @@ struct SshTerminalView: View {
             viewModel.disconnect()
         }
         .sheet(isPresented: $showingSnippets) {
-            SnippetPickerView(snippets: store.settings.snippets) { snippet in
+            SnippetPickerView { snippet in
                 viewModel.sendText(snippet.content)
                 if snippet.appendEnter {
                     viewModel.sendText("\r")
@@ -680,31 +693,65 @@ struct TerminalWebView: UIViewRepresentable {
 }
 
 struct SnippetPickerView: View {
-    let snippets: [TerminalSnippet]
+    @EnvironmentObject private var store: AppStore
     let onSelect: (TerminalSnippet) -> Void
     @Environment(\.dismiss) private var dismiss
+    @State private var showingAdd = false
+    @State private var newTitle = ""
+    @State private var newContent = ""
+    @State private var newAppendEnter = true
     
     var body: some View {
         NavigationStack {
-            List(snippets) { snippet in
-                Button {
-                    onSelect(snippet)
-                    dismiss()
-                } label: {
-                    VStack(alignment: .leading) {
-                        Text(snippet.title)
-                            .font(.headline)
-                        Text(snippet.content)
-                            .font(.caption)
-                            .lineLimit(1)
-                            .foregroundStyle(.secondary)
+            List {
+                ForEach(store.settings.snippets) { snippet in
+                    Button {
+                        onSelect(snippet)
+                        dismiss()
+                    } label: {
+                        VStack(alignment: .leading) {
+                            Text(snippet.title)
+                                .font(.headline)
+                            Text(snippet.content)
+                                .font(.caption)
+                                .lineLimit(1)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                }
+                .onDelete { indexSet in
+                    var newSettings = store.settings
+                    newSettings.snippets.remove(atOffsets: indexSet)
+                    store.updateSettings(newSettings)
                 }
             }
             .navigationTitle("Snippets")
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showingAdd = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .alert("Add Snippet", isPresented: $showingAdd) {
+                TextField("Title", text: $newTitle)
+                TextField("Command", text: $newContent)
+                Button("Add") {
+                    guard !newTitle.isEmpty, !newContent.isEmpty else { return }
+                    var newSettings = store.settings
+                    newSettings.snippets.append(TerminalSnippet(title: newTitle, content: newContent, appendEnter: newAppendEnter))
+                    store.updateSettings(newSettings)
+                    newTitle = ""
+                    newContent = ""
+                }
+                Button("Cancel", role: .cancel) {
+                    newTitle = ""
+                    newContent = ""
                 }
             }
         }

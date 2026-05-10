@@ -101,18 +101,21 @@ struct KomariClient {
     }
 
     func getRecentStatus(token: String, uuid: String) async throws -> [LoadRecord] {
-        let encodedUuid = uuid.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? uuid
-        let request = try makeRequest(path: "/api/recent?uuid=\(encodedUuid)", method: "GET", token: token)
+        let encodedUuid = uuid.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? uuid
+        let request = try makeRequest(path: "/api/recent/\(encodedUuid)", method: "GET", token: token)
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw KomariClientError.invalidResponse
         }
         guard (200...299).contains(httpResponse.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? ""
-            throw KomariClientError.httpStatus(httpResponse.statusCode, path: "/api/recent?uuid=\(encodedUuid)", body: body)
+            throw KomariClientError.httpStatus(httpResponse.statusCode, path: "/api/recent/\(encodedUuid)", body: body)
         }
         let payload = try Self.decoder.decode(RecentStatusResponse.self, from: data)
-        return payload.data.map { $0.toDomain() }
+        if payload.status == "error", let message = payload.message {
+            throw KomariClientError.rpc(message)
+        }
+        return (payload.data ?? []).map { $0.toDomain() }
     }
 
     // MARK: - Admin Client API
@@ -516,17 +519,25 @@ private struct PingRecordPayload: Decodable {
 }
 
 private struct RecentStatusResponse: Decodable {
-    let data: [RecentStatusItemPayload]
+    let status: String?
+    let message: String?
+    let data: [RecentStatusItemPayload]?
 }
+
+private struct RecentCpuPayload: Decodable { let usage: Double? }
+private struct RecentUsedTotalPayload: Decodable { let total: Int64?; let used: Int64? }
+private struct RecentLoadPayload: Decodable { let load1: Double? }
+private struct RecentNetworkPayload: Decodable { let up: Int64?; let down: Int64? }
+private struct RecentConnectionsPayload: Decodable { let tcp: Int?; let udp: Int? }
 
 private struct RecentStatusItemPayload: Decodable {
     let cpu: RecentCpuPayload?
     let ram: RecentUsedTotalPayload?
-    let load: RecentLoadPayload?
     let disk: RecentUsedTotalPayload?
     let network: RecentNetworkPayload?
-    let connections: RecentConnectionsPayload?
+    let load: RecentLoadPayload?
     let process: Int?
+    let connections: RecentConnectionsPayload?
     let updatedAt: String?
 
     func toDomain() -> LoadRecord {
@@ -544,12 +555,6 @@ private struct RecentStatusItemPayload: Decodable {
         )
     }
 }
-
-private struct RecentCpuPayload: Decodable { let usage: Double? }
-private struct RecentUsedTotalPayload: Decodable { let total: Int64?; let used: Int64? }
-private struct RecentLoadPayload: Decodable { let load1: Double? }
-private struct RecentNetworkPayload: Decodable { let up: Int64?; let down: Int64? }
-private struct RecentConnectionsPayload: Decodable { let tcp: Int?; let udp: Int? }
 
 private func percent(used: Int64?, total: Int64?) -> Double {
     guard let used, let total, total > 0 else { return 0 }
