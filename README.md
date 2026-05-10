@@ -6,7 +6,7 @@ English | [简体中文](README_zh.md)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ciallothu/YanamiNext)
 
 <p style="text-align: center;">
-    <img alt="banner" src="assets/banner.png">
+    <img alt="banner" src="docs/assets/banner.png">
 </p>
 
 **YanamiNext** supports Android & iPhone for the [Komari](https://github.com/komari-monitor/komari) server monitoring tool. The Android app is built with Material Design 3, and the iPhone app is built with SwiftUI.
@@ -37,47 +37,47 @@ English | [简体中文](README_zh.md)
 ### Instance Management
 
 <p style="text-align: center;">
-    <img alt="addserver" src="assets/addserver.png" width="360"> <img alt="serverlist" src="assets/serverlist.png" width="360">
+    <img alt="addserver" src="docs/assets/addserver.png" width="360"> <img alt="serverlist" src="docs/assets/serverlist.png" width="360">
 </p>
 
 ### Day/Light Mode (Phone)
 
 <p style="text-align: center;">
-    <img alt="nodelist" src="assets/nodelist.png" width="360"> <img alt="nodedetail1" src="assets/nodedetail1.png" width="360">
+    <img alt="nodelist" src="docs/assets/nodelist.png" width="360"> <img alt="nodedetail1" src="docs/assets/nodedetail1.png" width="360">
 </p>
 
 ### Day/Light Mode (Tablet)
 
 <p style="text-align: center;">
-    <img alt="nodelisttablet" src="assets/nodelisttablet.png" width="720">
+    <img alt="nodelisttablet" src="docs/assets/nodelisttablet.png" width="720">
 </p>
 
 <p style="text-align: center;">
-    <img alt="nodedetail1tablet" src="assets/nodedetail1tablet.png" width="720">
+    <img alt="nodedetail1tablet" src="docs/assets/nodedetail1tablet.png" width="720">
 </p>
 
 ### Night/Dark Mode
 
 <p style="text-align: center;">
-    <img alt="nodelistdark" src="assets/nodelistdark.png" width="360"> <img alt="nodedetaildark" src="assets/nodedetaildark.png" width="360">
+    <img alt="nodelistdark" src="docs/assets/nodelistdark.png" width="360"> <img alt="nodedetaildark" src="docs/assets/nodedetaildark.png" width="360">
 </p>
 
 ### Latency Monitoring/SSH Terminal
 
 <p style="text-align: center;">
-    <img alt="nodedetail2" src="assets/nodedetail2.png" width="360"> <img alt="nodeterminal" src="assets/nodeterminal.png" width="360">
+    <img alt="nodedetail2" src="docs/assets/nodedetail2.png" width="360"> <img alt="nodeterminal" src="docs/assets/nodeterminal.png" width="360">
 </p>
 
 ### Snippets
 
 <p style="text-align: center;">
-    <img alt="snippetslist" src="assets/snippetslist.png" width="360"> <img alt="addsnippet" src="assets/addsnippet.png" width="360">
+    <img alt="snippetslist" src="docs/assets/snippetslist.png" width="360"> <img alt="addsnippet" src="docs/assets/addsnippet.png" width="360">
 </p>
 
 ### Widget
 
 <p style="text-align: center;">
-    <img alt="widget" src="assets/widget.png" width="360"> <img alt="widgetdark" src="assets/widgetdark.png" width="360">
+    <img alt="widget" src="docs/assets/widget.png" width="360"> <img alt="widgetdark" src="docs/assets/widgetdark.png" width="360">
 </p>
 
 </details>
@@ -94,13 +94,13 @@ English | [简体中文](README_zh.md)
 
 ```bash
 # Android debug APK
-./gradlew assembleDebug
+(cd apps/android && ./gradlew assembleDebug)
 
 # Android release APK
-./gradlew assembleRelease
+(cd apps/android && ./gradlew assembleRelease)
 
 # Clean and build Android debug APK
-./gradlew clean assembleDebug
+(cd apps/android && ./gradlew clean assembleDebug)
 
 # Unsigned iPhone IPA
 BUILD_NUMBER=${GITHUB_RUN_NUMBER:-1}
@@ -110,7 +110,7 @@ SHORT_SHA=${GITHUB_SHA:-local}
 SHORT_SHA=${SHORT_SHA:0:7}
 VERSION="YanamiNext-Build-${BRANCH_VERSION:-local}-${SHORT_SHA}"
 xcodebuild \
-  -project ios/Yanami.xcodeproj \
+  -project apps/iphone/Yanami.xcodeproj \
   -scheme Yanami \
   -configuration Release \
   -sdk iphoneos \
@@ -129,7 +129,7 @@ ditto build/ios/Build/Products/Release-iphoneos/Yanami.app build/ios-ipa/Payload
 (cd build/ios-ipa && ditto -c -k --sequesterRsrc --keepParent Payload "../${VERSION}.ipa")
 ```
 
-Android build outputs are located at `app/build/outputs/apk/`. CI pre-release assets use `YanamiNext-Build-<branch>-<short-sha>`; the unsigned iPhone IPA is generated at `build/YanamiNext-Build-<branch>-<short-sha>.ipa` and must be signed by the installer before device installation.
+Android build outputs are located at `apps/android/app/build/outputs/apk/`. CI pre-release assets use `YanamiNext-Build-<branch>-<short-sha>`; the unsigned iPhone IPA is generated at `build/YanamiNext-Build-<branch>-<short-sha>.ipa` and must be signed by the installer before device installation.
 
 ## Tech Stack
 
@@ -160,7 +160,7 @@ Data Layer    Repository Implementation, Ktor, Room, DataStore
 
 Each page follows the **Contract Pattern**, describing the complete MVI contract of the page with nested `State` / `Event` / `Effect`.
 
-The iPhone app lives under `ios/` as a native SwiftUI project. Its source is split into `Models`, `Services`, `Stores`, `Views`, `Utilities`, and `Resources`, matching the Android domain/data/UI separation while using native iOS APIs.
+The Android app lives under `apps/android`, and the iPhone app lives under `apps/iphone` as a native SwiftUI project. The iPhone source is split into `Models`, `Services`, `Stores`, `Views`, `Utilities`, and `Resources`, matching the Android domain/data/UI separation while using native iOS APIs.
 
 ### Navigation Flow
 

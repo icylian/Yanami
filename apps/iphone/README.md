@@ -26,7 +26,7 @@ xcodebuild \
   -configuration Release \
   -sdk iphoneos \
   -destination 'generic/platform=iOS' \
-  -derivedDataPath ../build/ios \
+  -derivedDataPath ../../build/ios \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGN_IDENTITY="" \
@@ -35,11 +35,11 @@ xcodebuild \
   MARKETING_VERSION="1.0" \
   CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
   build
-mkdir -p ../build/ios-ipa/Payload
-ditto ../build/ios/Build/Products/Release-iphoneos/Yanami.app ../build/ios-ipa/Payload/YanamiNext.app
-(cd ../build/ios-ipa && ditto -c -k --sequesterRsrc --keepParent Payload "../${VERSION}.ipa")
+mkdir -p ../../build/ios-ipa/Payload
+ditto ../../build/ios/Build/Products/Release-iphoneos/Yanami.app ../../build/ios-ipa/Payload/YanamiNext.app
+(cd ../../build/ios-ipa && ditto -c -k --sequesterRsrc --keepParent Payload "../${VERSION}.ipa")
 ```
 
-The unsigned IPA is generated at `../build/YanamiNext-Build-<branch>-<short-sha>.ipa`.
+The unsigned IPA is generated at `../../build/YanamiNext-Build-<branch>-<short-sha>.ipa`.
 
 The IPA must be signed before device installation.

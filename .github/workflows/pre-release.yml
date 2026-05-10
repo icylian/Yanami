@@ -55,6 +55,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Test and build debug APK
+        working-directory: apps/android
         run: |
           chmod +x ./gradlew
           ./gradlew \
@@ -64,6 +65,7 @@ jobs:
 
       - name: Run Android lint
         continue-on-error: true
+        working-directory: apps/android
         run: |
           ./gradlew \
             -PyanamiVersionName="${{ steps.build_version.outputs.version }}" \
@@ -74,7 +76,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: yanaminext-debug-apks
-          path: app/build/outputs/apk/debug/*.apk
+          path: apps/android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
       - name: Upload lint report
@@ -82,7 +84,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: yanaminext-lint-report
-          path: app/build/reports/lint-results-debug.html
+          path: apps/android/app/build/reports/lint-results-debug.html
           if-no-files-found: ignore
 
   iphone-review:
@@ -99,7 +101,7 @@ jobs:
       - name: Build unsigned iPhone device app
         run: |
           xcodebuild \
-            -project ios/Yanami.xcodeproj \
+            -project apps/iphone/Yanami.xcodeproj \
             -scheme Yanami \
             -configuration Release \
             -sdk iphoneos \

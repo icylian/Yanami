@@ -3,7 +3,7 @@
 # YanamiNext
 
 <p style="text-align: center;">
-    <img alt="banner" src="assets/banner.png">
+    <img alt="banner" src="docs/assets/banner.png">
 </p>
 
 **YanamiNext** 支持 Android & iPhone，用于连接 [Komari](https://github.com/komari-monitor/komari) 服务器监控工具。Android 端采用 Material Design 3，iPhone 端采用 SwiftUI。
@@ -34,47 +34,47 @@
 ### 实例管理
 
 <p style="text-align: center;">
-    <img alt="addserver" src="assets/addserver.png" width="360"> <img alt="serverlist" src="assets/serverlist.png" width="360">
+    <img alt="addserver" src="docs/assets/addserver.png" width="360"> <img alt="serverlist" src="docs/assets/serverlist.png" width="360">
 </p>
 
 ### 日间/浅色模式（手机）
 
 <p style="text-align: center;">
-    <img alt="nodelist" src="assets/nodelist.png" width="360"> <img alt="nodedetail1" src="assets/nodedetail1.png" width="360">
+    <img alt="nodelist" src="docs/assets/nodelist.png" width="360"> <img alt="nodedetail1" src="docs/assets/nodedetail1.png" width="360">
 </p>
 
 ### 日间/浅色模式（平板）
 
 <p style="text-align: center;">
-    <img alt="nodelisttablet" src="assets/nodelisttablet.png" width="720">
+    <img alt="nodelisttablet" src="docs/assets/nodelisttablet.png" width="720">
 </p>
 
 <p style="text-align: center;">
-    <img alt="nodedetail1tablet" src="assets/nodedetail1tablet.png" width="720">
+    <img alt="nodedetail1tablet" src="docs/assets/nodedetail1tablet.png" width="720">
 </p>
 
 ### 夜间/深色模式
 
 <p style="text-align: center;">
-    <img alt="nodelistdark" src="assets/nodelistdark.png" width="360"> <img alt="nodedetaildark" src="assets/nodedetaildark.png" width="360">
+    <img alt="nodelistdark" src="docs/assets/nodelistdark.png" width="360"> <img alt="nodedetaildark" src="docs/assets/nodedetaildark.png" width="360">
 </p>
 
 ### 延迟监测/SSH终端
 
 <p style="text-align: center;">
-    <img alt="nodedetail2" src="assets/nodedetail2.png" width="360"> <img alt="nodeterminal" src="assets/nodeterminal.png" width="360">
+    <img alt="nodedetail2" src="docs/assets/nodedetail2.png" width="360"> <img alt="nodeterminal" src="docs/assets/nodeterminal.png" width="360">
 </p>
 
 ### 代码片段/Snippets
 
 <p style="text-align: center;">
-    <img alt="snippetslist" src="assets/snippetslist.png" width="360"> <img alt="addsnippet" src="assets/addsnippet.png" width="360">
+    <img alt="snippetslist" src="docs/assets/snippetslist.png" width="360"> <img alt="addsnippet" src="docs/assets/addsnippet.png" width="360">
 </p>
 
 ### 桌面小部件
 
 <p style="text-align: center;">
-    <img alt="widget" src="assets/widget.png" width="360"> <img alt="widgetdark" src="assets/widgetdark.png" width="360">
+    <img alt="widget" src="docs/assets/widget.png" width="360"> <img alt="widgetdark" src="docs/assets/widgetdark.png" width="360">
 </p>
 
 </details>
@@ -91,13 +91,13 @@
 
 ```bash
 # Android Debug APK
-./gradlew assembleDebug
+(cd apps/android && ./gradlew assembleDebug)
 
 # Android Release APK
-./gradlew assembleRelease
+(cd apps/android && ./gradlew assembleRelease)
 
 # 清理后构建 Android Debug APK
-./gradlew clean assembleDebug
+(cd apps/android && ./gradlew clean assembleDebug)
 
 # 未签名 iPhone IPA
 BUILD_NUMBER=${GITHUB_RUN_NUMBER:-1}
@@ -107,7 +107,7 @@ SHORT_SHA=${GITHUB_SHA:-local}
 SHORT_SHA=${SHORT_SHA:0:7}
 VERSION="YanamiNext-Build-${BRANCH_VERSION:-local}-${SHORT_SHA}"
 xcodebuild \
-  -project ios/Yanami.xcodeproj \
+  -project apps/iphone/Yanami.xcodeproj \
   -scheme Yanami \
   -configuration Release \
   -sdk iphoneos \
@@ -126,7 +126,7 @@ ditto build/ios/Build/Products/Release-iphoneos/Yanami.app build/ios-ipa/Payload
 (cd build/ios-ipa && ditto -c -k --sequesterRsrc --keepParent Payload "../${VERSION}.ipa")
 ```
 
-Android 构建产物位于 `app/build/outputs/apk/`。CI 预发布产物使用 `YanamiNext-Build-<分支>-<短提交号>`；未签名 iPhone IPA 位于 `build/YanamiNext-Build-<分支>-<短提交号>.ipa`，安装到真机前需要使用者自行签名。
+Android 构建产物位于 `apps/android/app/build/outputs/apk/`。CI 预发布产物使用 `YanamiNext-Build-<分支>-<短提交号>`；未签名 iPhone IPA 位于 `build/YanamiNext-Build-<分支>-<短提交号>.ipa`，安装到真机前需要使用者自行签名。
 
 ## 技术栈
 
@@ -157,7 +157,7 @@ Data Layer    Repository 实现、Ktor、Room、DataStore
 
 每个页面遵循 **Contract 模式**，以嵌套的 `State` / `Event` / `Effect` 描述该页面的完整 MVI 契约。
 
-iPhone 端位于 `ios/`，是原生 SwiftUI 工程。源码拆分为 `Models`、`Services`、`Stores`、`Views`、`Utilities` 和 `Resources`，对应 Android 的领域/数据/UI 分层，同时使用原生 iOS API。
+Android 端位于 `apps/android`，iPhone 端位于 `apps/iphone`，是原生 SwiftUI 工程。iPhone 源码拆分为 `Models`、`Services`、`Stores`、`Views`、`Utilities` 和 `Resources`，对应 Android 的领域/数据/UI 分层，同时使用原生 iOS API。
 
 ### 导航流
 

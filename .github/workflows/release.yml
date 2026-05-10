@@ -51,6 +51,7 @@ jobs:
           echo "name=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Build release APK
+        working-directory: apps/android
         env:
           KEYSTORE_FILE: ${{ github.workspace }}/release.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -66,7 +67,7 @@ jobs:
       - name: Rename APKs
         run: |
           VERSION=${{ steps.release_version.outputs.name }}
-          cd app/build/outputs/apk/release
+          cd apps/android/app/build/outputs/apk/release
           for apk in *.apk; do
             if [[ "$apk" == *"universal"* ]]; then
               mv "$apk" "YanamiNext-v${VERSION}-universal.apk"
@@ -81,7 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: YanamiNext-${{ steps.release_version.outputs.name }}
-          path: app/build/outputs/apk/release/YanamiNext-*.apk
+          path: apps/android/app/build/outputs/apk/release/YanamiNext-*.apk
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v') || inputs.publish_release == true
@@ -91,4 +92,4 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-          files: app/build/outputs/apk/release/YanamiNext-*.apk
+          files: apps/android/app/build/outputs/apk/release/YanamiNext-*.apk

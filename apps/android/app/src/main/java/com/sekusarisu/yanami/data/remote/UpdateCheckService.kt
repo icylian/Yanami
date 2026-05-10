@@ -24,7 +24,7 @@ class UpdateCheckService {
     companion object {
         private const val TAG = "UpdateCheckService"
         private const val UPDATE_URL =
-                "https://raw.githubusercontent.com/ciallothu/YanamiNext/main/update.json"
+                "https://raw.githubusercontent.com/ciallothu/YanamiNext/main/docs/update.json"
     }
 
     private val json = Json { ignoreUnknownKeys = true }
