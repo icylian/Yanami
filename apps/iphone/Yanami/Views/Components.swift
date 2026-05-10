@@ -16,19 +16,91 @@ struct MetricView: View {
     }
 }
 
-struct StatusPill: View {
-    let isOnline: Bool
+struct CircularUsageIndicator: View {
+    let label: String
+    let percent: Double
+    let detail: String
+    var ringSize: CGFloat = 64
+    var strokeWidth: CGFloat = 5
 
     var body: some View {
+        VStack(spacing: 4) {
+            ZStack {
+                Circle()
+                    .stroke(Color(.systemGray5), lineWidth: strokeWidth)
+                
+                Circle()
+                    .trim(from: 0, to: CGFloat(min(max(percent / 100, 0), 1)))
+                    .stroke(usageColor, style: StrokeStyle(lineWidth: strokeWidth, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.easeOut(duration: 0.6), value: percent)
+                
+                VStack(spacing: 1) {
+                    Text(label)
+                        .font(.system(size: 8, weight: .medium))
+                        .foregroundStyle(.secondary)
+                    Text("\(Int(percent))%")
+                        .font(.system(size: 12, weight: .bold))
+                }
+            }
+            .frame(width: ringSize, height: ringSize)
+            
+            Text(detail)
+                .font(.system(size: 9))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+    }
+
+    private var usageColor: Color {
+        if percent >= 90 { return .red }
+        if percent >= 70 { return .orange }
+        return .accentColor
+    }
+}
+
+struct UptimeBadge: View {
+    let uptime: Int64
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: "clock")
+            Text(Formatters.uptime(uptime))
+        }
+        .font(.system(size: 10, weight: .medium))
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(Color.blue.opacity(0.12))
+        .foregroundStyle(.blue)
+        .clipShape(Capsule())
+    }
+}
+
+struct ExpiryBadge: View {
+    let dateString: String
+    var body: some View {
+        Text(dateString)
+            .font(.system(size: 10, weight: .medium))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(Color.orange.opacity(0.12))
+            .foregroundStyle(.orange)
+            .clipShape(Capsule())
+    }
+}
+
+struct StatusBadge: View {
+    let isOnline: Bool
+    var body: some View {
         Text(isOnline ? "Online" : "Offline")
-            .font(.caption2.bold())
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(isOnline ? Color.green.opacity(0.16) : Color.red.opacity(0.16))
+            .font(.system(size: 10, weight: .bold))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(isOnline ? Color.green.opacity(0.12) : Color.red.opacity(0.12))
             .foregroundStyle(isOnline ? .green : .red)
             .clipShape(Capsule())
     }
 }
+
 
 struct ResourceMeter: View {
     let title: String

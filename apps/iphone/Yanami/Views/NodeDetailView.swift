@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 struct NodeDetailView: View {
     @EnvironmentObject private var store: AppStore
@@ -26,17 +27,27 @@ struct NodeDetailView: View {
                 }
 
                 Section("Live Resources") {
-                    ResourceMeter(title: "CPU", value: node.cpuUsage / 100, label: Formatters.percent(node.cpuUsage))
-                    ResourceMeter(
-                        title: "RAM",
-                        value: node.memTotal > 0 ? Double(node.memUsed) / Double(node.memTotal) : 0,
-                        label: "\(Formatters.bytes(node.memUsed)) / \(Formatters.bytes(node.memTotal))"
-                    )
-                    ResourceMeter(
-                        title: "Disk",
-                        value: node.diskTotal > 0 ? Double(node.diskUsed) / Double(node.diskTotal) : 0,
-                        label: "\(Formatters.bytes(node.diskUsed)) / \(Formatters.bytes(node.diskTotal))"
-                    )
+                    HStack {
+                        CircularUsageIndicator(
+                            label: "CPU",
+                            percent: node.cpuUsage,
+                            detail: node.cpuCores > 0 ? "\(node.cpuCores) Core" : ""
+                        )
+                        Spacer()
+                        CircularUsageIndicator(
+                            label: "RAM",
+                            percent: node.memTotal > 0 ? Double(node.memUsed) / Double(node.memTotal) * 100 : 0,
+                            detail: "\(Formatters.bytes(node.memUsed)) / \(Formatters.bytes(node.memTotal))"
+                        )
+                        Spacer()
+                        CircularUsageIndicator(
+                            label: "DISK",
+                            percent: node.diskTotal > 0 ? Double(node.diskUsed) / Double(node.diskTotal) * 100 : 0,
+                            detail: "\(Formatters.bytes(node.diskUsed)) / \(Formatters.bytes(node.diskTotal))"
+                        )
+                    }
+                    .padding(.vertical, 8)
+                    
                     if let traffic = node.trafficUsage {
                         ResourceMeter(
                             title: "Traffic Limit",
@@ -72,10 +83,20 @@ struct NodeDetailView: View {
                         Text("24h").tag(24)
                     }
                     .pickerStyle(.segmented)
-                    RecordsSummaryView(records: store.nodeDetail.loadRecords)
+                    
+                    if !store.nodeDetail.loadRecords.isEmpty {
+                        LoadChart(records: store.nodeDetail.loadRecords)
+                            .frame(height: 160)
+                            .padding(.vertical, 8)
+                    } else {
+                        Text("No load records")
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding()
+                    }
                 }
 
-                Section("Ping") {
+                Section("Ping Monitoring") {
                     Picker("Range", selection: Binding(
                         get: { store.nodeDetail.pingHours },
                         set: { store.setPingHours($0) }
@@ -85,19 +106,32 @@ struct NodeDetailView: View {
                         Text("24h").tag(24)
                     }
                     .pickerStyle(.segmented)
-                    PingSummaryView(tasks: store.nodeDetail.pingTasks, records: store.nodeDetail.pingRecords)
-                }
-
-                Section("SSH Terminal") {
-                    if store.activeServer?.authType == .guest {
-                        Text("SSH terminal is disabled in guest mode.")
-                            .foregroundStyle(.secondary)
-                    } else if let server = store.activeServer, let node = store.nodeDetail.node {
-                        NavigationLink {
-                            TerminalNavigationWrapper(uuid: node.uuid, server: server)
-                        } label: {
-                            Label("Open SSH Terminal", systemImage: "terminal")
+                    
+                    if !store.nodeDetail.pingTasks.isEmpty {
+                        ForEach(store.nodeDetail.pingTasks) { task in
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text(task.name)
+                                        .font(.subheadline.bold())
+                                    Spacer()
+                                    Text("\(Formatters.number(task.latest))ms / \(Formatters.percent(task.loss))")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                let taskRecords = store.nodeDetail.pingRecords.filter { $0.taskId == task.id }
+                                if !taskRecords.isEmpty {
+                                    PingChart(records: taskRecords)
+                                        .frame(height: 100)
+                                }
+                            }
+                            .padding(.vertical, 4)
                         }
+                    } else {
+                        Text("No ping tasks")
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding()
                     }
                 }
             } else if let error = store.nodeDetail.error {
@@ -105,6 +139,17 @@ struct NodeDetailView: View {
             }
         }
         .navigationTitle(store.nodeDetail.node?.name ?? "Node Detail")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if let server = store.activeServer, let node = store.nodeDetail.node, node.isOnline, server.authType != .guest {
+                    NavigationLink {
+                        TerminalNavigationWrapper(uuid: node.uuid, server: server)
+                    } label: {
+                        Image(systemName: "terminal")
+                    }
+                }
+            }
+        }
         .refreshable {
             await store.loadNodeDetail(uuid: nodeId)
         }
@@ -113,6 +158,65 @@ struct NodeDetailView: View {
         }
     }
 }
+
+private struct LoadChart: View {
+    let records: [LoadRecord]
+    
+    var body: some View {
+        Chart {
+            ForEach(records) { record in
+                LineMark(
+                    x: .value("Time", parseISO8601(record.time)),
+                    y: .value("CPU", record.cpu),
+                    series: .value("Metric", "CPU")
+                )
+                .foregroundStyle(.blue)
+                
+                LineMark(
+                    x: .value("Time", parseISO8601(record.time)),
+                    y: .value("RAM", record.ramPercent),
+                    series: .value("Metric", "RAM")
+                )
+                .foregroundStyle(.green)
+            }
+        }
+        .chartYScale(domain: 0...100)
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .hour)) { value in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel(format: .dateTime.hour().minute())
+            }
+        }
+    }
+}
+
+private struct PingChart: View {
+    let records: [PingRecord]
+    
+    var body: some View {
+        Chart {
+            ForEach(records) { record in
+                LineMark(
+                    x: .value("Time", parseISO8601(record.time)),
+                    y: .value("Latency", record.value)
+                )
+                .foregroundStyle(.orange)
+            }
+        }
+        .chartXAxis(.hidden)
+        .chartYAxis {
+            AxisMarks(position: .leading)
+        }
+    }
+}
+
+private func parseISO8601(_ string: String) -> Date {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter.date(from: string) ?? Date()
+}
+
 
 private struct TerminalNavigationWrapper: View {
     let uuid: String

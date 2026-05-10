@@ -117,29 +117,93 @@ private struct NodeRowView: View {
     let node: KomariNode
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(node.name)
-                        .font(.headline)
-                    Text([node.region, node.group, node.os].filter { !$0.isEmpty }.joined(separator: " / "))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 12) {
+            // Header: Region, Name, Badges
+            HStack(spacing: 8) {
+                Text(node.region.isEmpty ? "🌐" : node.region)
+                    .font(.subheadline)
+                
+                Text(node.name)
+                    .font(.subheadline.bold())
+                    .lineLimit(1)
+                
+                Spacer()
+                
+                if node.isOnline {
+                    UptimeBadge(uptime: node.uptime)
                 }
-                Spacer()
-                StatusPill(isOnline: node.isOnline)
+                
+                if let expiredAt = node.expiredAt, !expiredAt.isEmpty {
+                    ExpiryBadge(dateString: expiredAt)
+                }
+                
+                StatusBadge(isOnline: node.isOnline)
             }
 
-            ResourceMeter(title: "CPU", value: node.cpuUsage / 100, label: Formatters.percent(node.cpuUsage))
+            if node.isOnline {
+                // Circular Indicators
+                HStack(alignment: .top) {
+                    CircularUsageIndicator(
+                        label: "CPU",
+                        percent: node.cpuUsage,
+                        detail: node.cpuCores > 0 ? "\(node.cpuCores) Core" : ""
+                    )
+                    Spacer()
+                    CircularUsageIndicator(
+                        label: "RAM",
+                        percent: node.memTotal > 0 ? Double(node.memUsed) / Double(node.memTotal) * 100 : 0,
+                        detail: Formatters.bytes(node.memTotal)
+                    )
+                    Spacer()
+                    CircularUsageIndicator(
+                        label: "DISK",
+                        percent: node.diskTotal > 0 ? Double(node.diskUsed) / Double(node.diskTotal) * 100 : 0,
+                        detail: Formatters.bytes(node.diskTotal)
+                    )
+                    
+                    if let traffic = node.trafficUsage {
+                        Spacer()
+                        VStack(spacing: 4) {
+                            ZStack {
+                                Circle()
+                                    .stroke(Color(.systemGray5), lineWidth: 5)
+                                Circle()
+                                    .trim(from: 0, to: CGFloat(traffic.percent))
+                                    .stroke(Color.purple, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                                    .rotationEffect(.degrees(-90))
+                                
+                                Text("\(Int(traffic.percent * 100))%")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .frame(width: 44, height: 44)
+                            Text("TRAFFIC")
+                                .font(.system(size: 8, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
 
-            HStack {
-                Text("RAM \(Formatters.bytes(node.memUsed)) / \(Formatters.bytes(node.memTotal))")
-                Spacer()
-                Text("Up \(Formatters.rate(node.netOut))")
+                // Traffic speeds and total
+                HStack {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.up")
+                        Text(Formatters.rate(node.netOut))
+                        Text("(\(Formatters.bytes(node.netTotalUp)))")
+                            .font(.system(size: 10))
+                    }
+                    Spacer()
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.down")
+                        Text(Formatters.rate(node.netIn))
+                        Text("(\(Formatters.bytes(node.netTotalDown)))")
+                            .font(.system(size: 10))
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
     }
 }
