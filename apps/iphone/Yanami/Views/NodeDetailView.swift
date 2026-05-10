@@ -60,7 +60,7 @@ struct NodeDetailView: View {
                 }
 
                 Section("System") {
-                    DetailLine("UUID", node.uuid)
+                    DetailLine("UUID", store.settings.maskIpEnabled ? Formatters.maskIpOrUuid(node.uuid) : node.uuid)
                     DetailLine("CPU", [node.cpuName, node.cpuCores > 0 ? "\(node.cpuCores) cores" : ""].filter { !$0.isEmpty }.joined(separator: " / "))
                     DetailLine("Kernel", node.kernelVersion)
                     DetailLine("Virtualization", node.virtualization)

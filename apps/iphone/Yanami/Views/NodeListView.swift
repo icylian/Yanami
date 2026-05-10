@@ -52,13 +52,23 @@ struct NodeListView: View {
             .searchable(text: $store.searchQuery, prompt: "Search node, UUID, group")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Picker("Status", selection: $store.statusFilter) {
-                        ForEach(StatusFilter.allCases) { filter in
-                            Text(filter.title).tag(filter)
+                    HStack {
+                        if let server = store.activeServer, server.authType != .guest {
+                            NavigationLink {
+                                AdminNavigationWrapper(server: server)
+                            } label: {
+                                Image(systemName: "server.rack")
+                            }
                         }
+                        
+                        Picker("Status", selection: $store.statusFilter) {
+                            ForEach(StatusFilter.allCases) { filter in
+                                Text(filter.title).tag(filter)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(width: 180)
                     }
-                    .pickerStyle(.segmented)
-                    .frame(width: 240)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -205,5 +215,54 @@ private struct NodeRowView: View {
             }
         }
         .padding(.vertical, 8)
+    }
+}
+
+private struct AdminNavigationWrapper: View {
+    let server: ServerProfile
+    @State private var token: String?
+    @State private var error: String?
+
+    var body: some View {
+        Group {
+            if let token = token {
+                AdminView(store: AdminStore(server: server, token: token))
+            } else if let error = error {
+                VStack {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundColor(.red)
+                    Text(error)
+                        .padding()
+                    Button("Retry") {
+                        Task { await resolveToken() }
+                    }
+                }
+            } else {
+                ProgressView("Preparing admin panel...")
+            }
+        }
+        .task {
+            await resolveToken()
+        }
+    }
+
+    private func resolveToken() async {
+        do {
+            let client = KomariClient(profile: server)
+            switch server.authType {
+            case .guest:
+                error = "Guest mode not supported"
+            case .apiKey:
+                token = server.apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+            case .password:
+                if !server.sessionToken.isEmpty {
+                    token = server.sessionToken
+                } else {
+                    token = try await client.login()
+                }
+            }
+        } catch {
+            self.error = error.localizedDescription
+        }
     }
 }

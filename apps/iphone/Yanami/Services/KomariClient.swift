@@ -115,6 +115,57 @@ struct KomariClient {
         return payload.data.map { $0.toDomain() }
     }
 
+    // MARK: - Admin Client API
+
+    func getClients(token: String) async throws -> [ManagedClient] {
+        let request = try makeRequest(path: "/api/admin/client/list", method: "GET", token: token)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(data: data, response: response, path: "/api/admin/client/list")
+        return try Self.decoder.decode([ManagedClient].self, from: data)
+    }
+    
+    func deleteClient(token: String, uuid: String) async throws {
+        let request = try makeRequest(path: "/api/admin/client/\(uuid)/remove", method: "POST", token: token)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(data: data, response: response, path: "/api/admin/client/\(uuid)/remove")
+    }
+    
+    func getClientToken(token: String, uuid: String) async throws -> String {
+        let request = try makeRequest(path: "/api/admin/client/\(uuid)/token", method: "GET", token: token)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(data: data, response: response, path: "/api/admin/client/\(uuid)/token")
+        let payload = try Self.decoder.decode([String: String].self, from: data)
+        return payload["token"] ?? ""
+    }
+
+    // MARK: - Admin Ping API
+
+    func getPingTasks(token: String) async throws -> [AdminPingTask] {
+        let request = try makeRequest(path: "/api/admin/ping/", method: "GET", token: token)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(data: data, response: response, path: "/api/admin/ping/")
+        return try Self.decoder.decode([AdminPingTask].self, from: data)
+    }
+
+    func deletePingTask(token: String, ids: [Int]) async throws {
+        let request = try makeRequest(path: "/api/admin/ping/delete", method: "POST", jsonBody: ["id": ids], token: token)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateAdminResponse(data: data, response: response, path: "/api/admin/ping/delete")
+    }
+    
+    private func validateAdminResponse(data: Data, response: URLResponse, path: String) throws {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw KomariClientError.invalidResponse
+        }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let body = String(data: data, encoding: .utf8) ?? ""
+            if let env = try? Self.decoder.decode(AdminEnvelope.self, from: data), let msg = env.message {
+                throw KomariClientError.rpc(msg)
+            }
+            throw KomariClientError.httpStatus(httpResponse.statusCode, path: path, body: body)
+        }
+    }
+
     func mergeNodes(infos: [String: NodeInfoPayload], statuses: [String: NodeStatusPayload]) -> [KomariNode] {
         infos.map { uuid, info in
             let status = statuses[uuid]
@@ -332,6 +383,11 @@ private struct RpcEnvelope<Result: Decodable>: Decodable {
 
 private struct RpcErrorPayload: Decodable {
     let code: Int?
+    let message: String?
+}
+
+private struct AdminEnvelope: Decodable {
+    let status: String?
     let message: String?
 }
 

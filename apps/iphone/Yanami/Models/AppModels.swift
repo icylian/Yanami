@@ -86,9 +86,10 @@ struct AppSettings: Codable, Equatable {
     var refreshIntervalSeconds = 2.0
     var terminalFontSize: Int = 14
     var snippets: [TerminalSnippet] = []
+    var maskIpEnabled = false
 
     enum CodingKeys: String, CodingKey {
-        case autoRefreshEnabled, refreshIntervalSeconds, terminalFontSize, snippets
+        case autoRefreshEnabled, refreshIntervalSeconds, terminalFontSize, snippets, maskIpEnabled
     }
 
     init() {}
@@ -99,6 +100,7 @@ struct AppSettings: Codable, Equatable {
         refreshIntervalSeconds = try container.decodeIfPresent(Double.self, forKey: .refreshIntervalSeconds) ?? 2.0
         terminalFontSize = try container.decodeIfPresent(Int.self, forKey: .terminalFontSize) ?? 14
         snippets = try container.decodeIfPresent([TerminalSnippet].self, forKey: .snippets) ?? []
+        maskIpEnabled = try container.decodeIfPresent(Bool.self, forKey: .maskIpEnabled) ?? false
     }
 }
 
@@ -207,4 +209,25 @@ struct NodeDetailState: Equatable {
     var pingHours = 1
     var isLoading = false
     var error: String?
+}
+
+struct ManagedClient: Codable, Equatable, Identifiable {
+    let uuid: String
+    var name: String?
+    var weight: Int?
+    
+    var id: String { uuid }
+}
+
+struct AdminPingTask: Codable, Equatable, Identifiable {
+    let id: Int
+    var name: String
+    var type: String
+    var target: String
+    var interval: Int
+    var weight: Int?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, type, target, interval, weight
+    }
 }

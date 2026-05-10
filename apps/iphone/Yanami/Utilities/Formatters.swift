@@ -25,6 +25,15 @@ enum Formatters {
         if hours > 0 { return "\(hours)h \(minutes)m" }
         return "\(minutes)m"
     }
+
+    static func maskIpOrUuid(_ value: String) -> String {
+        guard value.count > 12 else {
+            return String(repeating: "*", count: value.count)
+        }
+        let start = value.prefix(4)
+        let end = value.suffix(4)
+        return "\(start)****\(end)"
+    }
 }
 
 extension String {

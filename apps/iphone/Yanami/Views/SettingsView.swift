@@ -14,6 +14,16 @@ struct SettingsView: View {
                     }
                 }
 
+                Section("Display") {
+                    Toggle("Mask IP / UUID", isOn: $draft.maskIpEnabled)
+                }
+
+                Section("Terminal") {
+                    Stepper(value: $draft.terminalFontSize, in: 8...32, step: 1) {
+                        Text("Font size \(draft.terminalFontSize)")
+                    }
+                }
+                
                 Section("Build") {
                     Text("Android & iPhone")
                     Text("Pre-release assets use a unique version tag per CI run.")
