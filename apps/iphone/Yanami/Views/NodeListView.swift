@@ -105,13 +105,42 @@ private struct NodeSummaryView: View {
                 MetricView(title: "Offline", value: "\(store.offlineCount)")
             }
 
-            HStack {
-                Label(Formatters.rate(store.totalNetIn), systemImage: "arrow.down")
-                Spacer()
-                Label(Formatters.rate(store.totalNetOut), systemImage: "arrow.up")
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3),
+                alignment: .leading,
+                spacing: 10
+            ) {
+                SummaryMetricView(
+                    title: "Realtime Speed",
+                    value: Formatters.rate(store.totalNetIn + store.totalNetOut),
+                    systemImage: "arrow.up.arrow.down"
+                )
+                SummaryMetricView(
+                    title: "Upload Speed",
+                    value: Formatters.rate(store.totalNetOut),
+                    systemImage: "arrow.up"
+                )
+                SummaryMetricView(
+                    title: "Download Speed",
+                    value: Formatters.rate(store.totalNetIn),
+                    systemImage: "arrow.down"
+                )
+                SummaryMetricView(
+                    title: "Total Traffic",
+                    value: Formatters.bytes(store.totalTrafficUp + store.totalTrafficDown),
+                    systemImage: "chart.bar"
+                )
+                SummaryMetricView(
+                    title: "Upload Traffic",
+                    value: Formatters.bytes(store.totalTrafficUp),
+                    systemImage: "arrow.up.circle"
+                )
+                SummaryMetricView(
+                    title: "Download Traffic",
+                    value: Formatters.bytes(store.totalTrafficDown),
+                    systemImage: "arrow.down.circle"
+                )
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
 
             if !store.statusMessage.isEmpty {
                 Text(store.statusMessage)
@@ -120,6 +149,35 @@ private struct NodeSummaryView: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+private struct SummaryMetricView: View {
+    let title: LocalizedStringKey
+    let value: String
+    let systemImage: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label {
+                Text(title)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            } icon: {
+                Image(systemName: systemImage)
+                    .imageScale(.small)
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+
+            Text(value)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .monospacedDigit()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

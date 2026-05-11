@@ -41,3 +41,9 @@
 "Unlock YanamiNext" = "解锁 YanamiNext";
 "Usage Percent" = "资源占用率";
 "YanamiNext Locked" = "YanamiNext 已锁定";
+"Realtime Speed" = "实时速度";
+"Upload Speed" = "上传速度";
+"Download Speed" = "下载速度";
+"Total Traffic" = "总流量";
+"Upload Traffic" = "上传流量";
+"Download Traffic" = "下载流量";

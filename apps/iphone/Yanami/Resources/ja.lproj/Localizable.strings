@@ -41,3 +41,9 @@
 "Unlock YanamiNext" = "YanamiNext のロックを解除";
 "Usage Percent" = "使用率";
 "YanamiNext Locked" = "YanamiNext はロック中";
+"Realtime Speed" = "リアルタイム速度";
+"Upload Speed" = "アップロード速度";
+"Download Speed" = "ダウンロード速度";
+"Total Traffic" = "総通信量";
+"Upload Traffic" = "アップロード通信量";
+"Download Traffic" = "ダウンロード通信量";
