@@ -1,0 +1,7 @@
+apps/iphone/Yanami/Views/Components.swift:30:36: error: reference to member 'systemGray5' cannot be resolved without a contextual type
+ 28 |             ZStack {
+ 29 |                 Circle()
+ 30 |                     .stroke(Color(.systemGray5), lineWidth: strokeWidth)
+    |                                    `- error: reference to member 'systemGray5' cannot be resolved without a contextual type
+ 31 |                 
+ 32 |                 Circle()

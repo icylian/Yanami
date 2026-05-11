@@ -4,37 +4,40 @@ This file provides guidance to Codex when working with code in this repository.
 
 ## Project Overview
 
-Yanami is a Material Design 3 Android client for the **Komari** server monitoring tool. It provides real-time WebSocket updates, multi-instance management, and server status visualization.
+YanamiNext supports Android & iPhone for the **Komari** server monitoring tool. The Android app uses Material Design 3, and the iPhone app uses SwiftUI.
 
 - **Package:** `com.sekusarisu.yanami`
-- **Language:** Kotlin | **Min SDK:** 28 | **Target/Compile SDK:** 36
-- **UI:** Jetpack Compose with Material 3
+- **Android:** Kotlin | **Min SDK:** 28 | **Target/Compile SDK:** 36 | Jetpack Compose with Material 3
+- **iPhone:** Swift 5 | iOS 16+ | SwiftUI
 
 ## Build Commands
 
 ```bash
 # Build debug APK
-./gradlew assembleDebug
+(cd apps/android && ./gradlew assembleDebug)
 
 # Build release APK
-./gradlew assembleRelease
+(cd apps/android && ./gradlew assembleRelease)
 
 # Run unit tests
-./gradlew test
+(cd apps/android && ./gradlew test)
 
 # Run a single test class
-./gradlew testDebugUnitTest --tests "com.sekusarisu.yanami.ExampleUnitTest"
+(cd apps/android && ./gradlew testDebugUnitTest --tests "com.sekusarisu.yanami.ExampleUnitTest")
 
 # Run Android instrumentation tests
-./gradlew connectedAndroidTest
+(cd apps/android && ./gradlew connectedAndroidTest)
 
 # Clean build
-./gradlew clean assembleDebug
+(cd apps/android && ./gradlew clean assembleDebug)
+
+# Build unsigned iPhone device app for IPA packaging
+xcodebuild -project apps/iphone/Yanami.xcodeproj -scheme Yanami -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM="" PROVISIONING_PROFILE_SPECIFIER="" MARKETING_VERSION="1.0" CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER:-1}" build
 ```
 
 ## Architecture
 
-**MVI (Model-View-Intent)** pattern with three layers:
+The Android app uses an **MVI (Model-View-Intent)** pattern with three layers:
 
 - **UI Layer:** Voyager `Screen` + Compose UI + `MviViewModel<State, Event, Effect>`
 - **Domain Layer:** Repository interfaces + domain models (`Node`, `ServerInstance`, etc.)
@@ -71,11 +74,13 @@ ServerListScreen → AddServerScreen → NodeListScreen → NodeDetailScreen
 - `SessionCookieInterceptor` (OkHttp) auto-injects the appropriate auth header based on `authType`.
 - Credentials and API Keys encrypted with AES/GCM via Android KeyStore (`CryptoManager`).
 - Room DB v3 stores `auth_type` and `encrypted_api_key` columns.
-- API details documented in `docs/API_STRUCTURES.md`.
+- Android source lives under `apps/android/app/src/main`; iPhone source lives under `apps/iphone/Yanami`.
 
 ### DI Setup
 
-All dependencies registered in `di/AppModule.kt` via Koin. App initialized in `YanamiApplication.kt`.
+All Android dependencies are registered in `di/AppModule.kt` via Koin. The app is initialized in `YanamiApplication.kt`.
+
+The iPhone app lives in `apps/iphone/` as a native SwiftUI project. It supports Komari password / API Key / guest auth, custom HTTP headers for Cloudflare Access service tokens, Keychain persistence, connection testing, and node list loading.
 
 ## Internationalization
 
@@ -83,7 +88,7 @@ Default language is **Chinese (zh)**. Also supports English (en) and Japanese (j
 
 ## Documentation
 
-- `docs/ARCHITECTURE.md` — Architecture diagrams and flows (Chinese)
-- `docs/API_STRUCTURES.md` — Complete Komari API reference
-- `docs/PROGRESS.md` — Development status and session notes
-- `REQUEST.MD` — Original requirements specification
+- `README.md` / `README_zh.md` — User-facing overview and build commands
+- `apps/iphone/README.md` — iPhone-specific build and scope notes
+- `docs/assets/` — README screenshots and banner assets
+- `docs/update.json` — Android update metadata consumed by `UpdateCheckService`

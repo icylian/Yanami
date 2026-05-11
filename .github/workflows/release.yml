@@ -35,7 +35,23 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > $GITHUB_WORKSPACE/release.jks
 
+      - name: Resolve release version
+        id: release_version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            BRANCH_REF="${GITHUB_REF_NAME:-manual}"
+            BRANCH_VERSION=$(printf '%s' "$BRANCH_REF" | tr '[:upper:]' '[:lower:]' | tr '/' '-' | sed -E 's/[^a-z0-9._-]+/-/g; s/-+/-/g; s/^-//; s/-$//')
+            if [[ -z "$BRANCH_VERSION" ]]; then
+              BRANCH_VERSION="manual"
+            fi
+            VERSION="YanamiNext-Build-${BRANCH_VERSION}-${GITHUB_SHA::7}"
+          fi
+          echo "name=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Build release APK
+        working-directory: apps/android
         env:
           KEYSTORE_FILE: ${{ github.workspace }}/release.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -43,40 +59,37 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleRelease
-
-      - name: Get version name
-        id: version
-        run: |
-          VERSION=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          echo "name=$VERSION" >> "$GITHUB_OUTPUT"
+          ./gradlew \
+            -PyanamiVersionName="${{ steps.release_version.outputs.name }}" \
+            -PyanamiVersionCode="$GITHUB_RUN_NUMBER" \
+            assembleRelease
 
       - name: Rename APKs
         run: |
-          VERSION=${{ steps.version.outputs.name }}
-          cd app/build/outputs/apk/release
+          VERSION=${{ steps.release_version.outputs.name }}
+          cd apps/android/app/build/outputs/apk/release
           for apk in *.apk; do
             if [[ "$apk" == *"universal"* ]]; then
-              mv "$apk" "Yanami-v${VERSION}-universal.apk"
+              mv "$apk" "YanamiNext-v${VERSION}-universal.apk"
             elif [[ "$apk" == *"arm64-v8a"* ]]; then
-              mv "$apk" "Yanami-v${VERSION}-arm64-v8a.apk"
+              mv "$apk" "YanamiNext-v${VERSION}-arm64-v8a.apk"
             elif [[ "$apk" == *"armeabi-v7a"* ]]; then
-              mv "$apk" "Yanami-v${VERSION}-armeabi-v7a.apk"
+              mv "$apk" "YanamiNext-v${VERSION}-armeabi-v7a.apk"
             fi
           done
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Yanami-${{ steps.version.outputs.name }}
-          path: app/build/outputs/apk/release/Yanami-*.apk
+          name: YanamiNext-${{ steps.release_version.outputs.name }}
+          path: apps/android/app/build/outputs/apk/release/YanamiNext-*.apk
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v') || inputs.publish_release == true
         uses: softprops/action-gh-release@v2
         with:
-          name: Yanami ${{ steps.version.outputs.name }}
+          name: YanamiNext ${{ steps.release_version.outputs.name }}
           draft: false
           prerelease: false
           generate_release_notes: true
-          files: app/build/outputs/apk/release/Yanami-*.apk
+          files: apps/android/app/build/outputs/apk/release/YanamiNext-*.apk
